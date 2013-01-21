@@ -91,9 +91,8 @@ function theme_dir_listing_list_view($node) {
   // Header building
   $header = array();
   if ($has_actions) {
-    $header[] = array(
-        'data' => ''
-    );
+	// data column removed because we use theme_tableselect to 
+	// build the checkboxes
   }
 
   // Considered each file (or directory)
@@ -112,7 +111,8 @@ function theme_dir_listing_list_view($node) {
       $data[FILEBROWSER_DATA_NAME_DISPLAY_NAME] = substr($data[FILEBROWSER_DATA_NAME_DISPLAY_NAME], 0, $pos);
     }
     if ($has_actions) {
-      $unsorted_rows[$file_name]['checkbox'] = ($data['mime-type'] != 'folder/parent' ? "<input type='checkbox' name='select_{$data['fid']}'/>" : '');
+      // checkboxes are now provided by theme_tableselect
+	  $unsorted_rows[$file_name]['fid'] = ($data['mime-type'] != 'folder/parent' ? "{$data['fid']}" : '');
     }
     foreach ($column_names as $column_name => $column_spec) {
       if (isset($node->folder_presentation->visible_columns[$column_name]) && $node->folder_presentation->visible_columns[$column_name]) {
@@ -268,8 +268,11 @@ function theme_dir_listing_list_view($node) {
       $output = theme('table', array('header' => $header, 'rows' => $rows));
 
     if ($has_actions) {
-       $output = drupal_render(drupal_get_form('filebrowser_form_actions', $output, $actions, $node));
+     // $output = drupal_render(drupal_get_form('filebrowser_form_actions', $output, $actions, $node));
+	  $output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
     }
+	// REMOVE
+	echo '<pre>';print_r($rows);echo '</pre>';
     return $output;
   } // Directory is not empty
 }

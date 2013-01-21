@@ -705,12 +705,9 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
     }
   }
   drupal_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
-  //$form_state['redirect'] = 'node/20';
 }
 
-//function filebrowser_form_actions($form, $form_state,$foo, $table, $actions, $node) {
-function filebrowser_form_actions($form, &$form_state, $table, $actions, $node) {
-  // REMOVE dump($node);exit();
+/*function filebrowser_form_actions($form, &$form_state, $table, $actions, $node) {
   $form = array();
   $form['#node'] = $node;
   $form['table'] = array('#markup' => $table,);
@@ -741,14 +738,58 @@ function filebrowser_form_actions($form, &$form_state, $table, $actions, $node) 
       '#suffix' => '</div><br/>'
   );
   return $form;
+}*/
+
+function filebrowser_form_actions($form, &$form_state, $header, $options, $actions, $node) {
+  $form = array();
+  $form['#node'] = $node;
+  $form['table'] = array(
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => $options,
+    '#multiple' => TRUE,
+  );
+  // Normally the checkboxes are created by form_process_tableselect(). They are created manually here 
+  // to have the checkboxes behave the way we want it for filebrowser. 
+  foreach ($options as $key => $data) {
+    $form['table'][$key] = array(
+      '#type' => 'checkbox', 
+      '#title' => $data['fid'], 
+      '#title_display' => 'invisible', 
+      '#return_value' => 1, 
+      '#default_value' =>  NULL, 
+	  // disable the checkbox and hide it if this item has no fid (is not a selectable item)
+	  '#disabled' => empty($data['fid']) ? TRUE : FALSE,
+      '#attributes' => empty($data['fid']) ? array('style' => 'display:none;') : '',
+     );
+  }
+
+  $options = array(
+      '' => t('choose an action')
+  );
+  foreach ($actions as $action) {
+    $options[$action['operation']] = $action['title'];
+  }
+  $form['action'] = array(
+      '#prefix' => '<br/><div class="container-inline">',
+      '#title' => t('actions'),
+      '#type' => 'select',
+      '#options' => $options
+  );
+  $form['submit'] = array(
+      '#value' => t('Process'),
+      '#type' => 'submit',
+      '#suffix' => '</div><br/>'
+  );
+  return $form;
 }
 
 function filebrowser_form_actions_submit($form, $form_state) {
+  $fids = array();
   if (!empty($form_state['values']['action'])) {
-    $fids = array();
-    foreach ($form['#node']->file_listing as $file_name => $data) {
-      if ($form_state['values']["select_{$data['fid']}"]) {
-        $fids[] = $data['fid'];
+	foreach ($form_state['values']['table'] as $key => $value) {
+	  if ($value) {
+        $fids[] = $form['table']['#options'][$key]['fid'];
       }
     }
     $result = module_invoke_all('filebrowser_action_process', $form['#node'], $form_state['values']['action'], $fids);
