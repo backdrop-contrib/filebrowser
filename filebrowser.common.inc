@@ -598,7 +598,6 @@ function _filebrowser_can_explore_subfolders(& $node) {
  * @return XHTML code
  */
 function _filebrowser_thumbnails_generate(& $node, & $file) {
-
   static $thumbnailers = NULL;
   if (!$thumbnailers) {
     $thumbnailers = module_implements("filebrowser_thumbnailer_get");
@@ -630,7 +629,7 @@ function _filebrowser_thumbnails_generate(& $node, & $file) {
       break;
     }
   }
-  return theme('image', array('path' => $icon));
+  return theme('image', array('path' => $icon, 'alt' => 'alt text'));
 }
 
 /**
@@ -658,7 +657,7 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
 
 // JSJ DEBUG HELPER - REMOVE
 function debugPrintCallingFunction () { 
-    $file = 'n/a'; 
+    $file = 'n/a';
     $func = 'n/a'; 
     $line = 'n/a'; 
     $debugTrace = debug_backtrace(); 

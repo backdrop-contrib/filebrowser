@@ -12,6 +12,7 @@
  * @return string
  */
 function theme_dir_listing_icon_view($node) {
+  $node = $node['node'];
   $files = & $node->file_listing;
 
   // Record if directory listing is empty or not.
@@ -29,15 +30,18 @@ function theme_dir_listing_icon_view($node) {
 
     // File extension case
     if ($file_name != ".." && $data['kind'] == 0 && $node->folder_presentation->hide_extension) {
-      $pos = strrpos($data['name'], ".");
-      $data[FILEBROWSER_DATA_NAME_DISPLAY_NAME] = substr($data['name'], 0, $pos);
+      $pos = strrpos($data['display-name'], ".");
+      $data[FILEBROWSER_DATA_NAME_DISPLAY_NAME] = substr($data['display-name'], 0, $pos);
     }
-    $thumbnail = _filebrowser_thumbnails_generate($node, $data);
-    $href = $data['url'];
-    $title = $data['display-name'] == '..' ? t('Go up') : $data['display-name'];
-    $new = theme('mark', $data['status']);
-    $description = $data['description'];
-    $output .= theme('dir_listing_icon', $data, $thumbnail, $title, $description, $href, $new);
+	$variables = array(
+	  'data' => $data,
+	  'thumbnail' => _filebrowser_thumbnails_generate($node, $data),
+      'href' => $data['url'],
+      'title' =>$data['display-name'] == '..' ? t('Go up') : $data['display-name'],
+      'new' => theme('mark', array('type' => $data['status'])),
+	  'description' => $data['description'],
+	);
+    $output .= theme('dir_listing_icon', $variables);
   }
   $output .= "</div>";
   return $output;
@@ -69,6 +73,7 @@ function theme_dir_listing_statistics($statistics) {
  * @return string A string containing list view XHTML.
  */
 function theme_dir_listing_list_view($node) {
+
   $node = $node['node'];
   $files = & $node->file_listing;
   // Deal with files.
@@ -268,11 +273,9 @@ function theme_dir_listing_list_view($node) {
       $output = theme('table', array('header' => $header, 'rows' => $rows));
 
     if ($has_actions) {
-     // $output = drupal_render(drupal_get_form('filebrowser_form_actions', $output, $actions, $node));
+      // in D7 we dont send the table to the form builder. The table is build by theme_tableselect
 	  $output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
     }
-	// REMOVE
-	echo '<pre>';print_r($rows);echo '</pre>';
     return $output;
   } // Directory is not empty
 }

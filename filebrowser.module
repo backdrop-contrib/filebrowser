@@ -914,7 +914,6 @@ function filebrowser_filebrowser_action_process($node, $action, $fids) {
       break;
 
     case 'delete' :
-    // REMOVE
       drupal_goto("filebrowser/delete/" . implode(',', $fids), array('query' => drupal_get_destination()) );
   }
 }
@@ -1082,18 +1081,18 @@ function filebrowser_theme() {
       'file' => 'filebrowser.theme.inc'
     ),
     'dir_listing_icon' => array(
-       'variables' => array(
-          'file' => NULL,
+      'template' => 'dir_listing_icon',
+    /*  'variables' => array(
+          'data' => NULL,
           'thumbnail' => NULL,
           'title' => NULL,
           'description' => NULL,
           'href' => NULL,
           'new' => NULL
-      ),
-    'template' => 'dir_listing_icon'
-    ),
+      ),*/
+	),
     'dir_listing_icon_view' => array(
-      'variables' => array( 'node' => NULL),
+      'variables' => array('node' => NULL),
       'file' => 'filebrowser.theme.inc'
     ),
     'dir_listing_statistics' => array(
