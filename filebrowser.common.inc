@@ -69,7 +69,7 @@ function _filebrowser_get_node_root(& $node) {
   $result = $node->folder_path;
   // token_replace is in D7 core *** if (module_exists("token")) {
   $result = token_replace($result, array('type' => 'global', 'object' => NULL, 'leading' => '[', $trailing = ']'));
-  
+
   return $result;
 }
 
@@ -183,7 +183,7 @@ function _filebrowser_url_query($options = array()) {
   $query = array();
   foreach ($_GET as $key => $value) {
     if ($key != 'q') {
-       $query[$key] = urlencode($value);
+      $query[$key] = urlencode($value);
     }
   }
   return $query;
@@ -301,7 +301,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   if (isset($cache[$cid])) {
     return $node->file_listing = $cache[$cid];
   }
-    
+
   // Load database folder content
   $db_content = array();
   $query = db_query("SELECT * FROM {node_dir_listing_content} where nid = :nid and root = :root",
@@ -524,7 +524,7 @@ function _filebrowser_load_description_file($path, $replace = NULL) {
     $descriptions[$path] = $replace;
   }
   //echo(print_r($descriptions) . '<br> path '. $path . '<br>');
- if (!isset($descriptions[$path])) {
+  if (!isset($descriptions[$path])) {
     $descriptions[$path] = array(
       'data' => array()
     );
@@ -541,7 +541,7 @@ function _filebrowser_load_description_file($path, $replace = NULL) {
         $matches = array();
         preg_match('/"([^"]+)"\s+(.*)|(\S+)\s+(.*)/', $line, $matches);
         $name = !empty($matches[1]) ? $matches[1] : $matches[3];
-        // FIXME JSJ Changed to matches[1] because 4 givers error 
+        // FIXME JSJ Changed to matches[1] because 4 givers error
         $description = !empty($matches[2]) ? $matches[2] : $matches[1];
         $description = str_replace('\n', "\n", $description);
         if (isset($descriptions[$path][$name])) {
@@ -648,23 +648,22 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
       $file_name .= ".{$path_info_old['extension']}";
     }
   }
-  echo('<br> function _filebrowser_build_new_upload_file_name is calling <br'); 
   _filebrowser_load_files($node);
 
   $target = _filebrowser_encoding_to_fs($node, $node->file_listing['.']['full-path'] . "/" . $file_name);
   return $target;
 }
 
-// JSJ DEBUG HELPER - REMOVE
-function debugPrintCallingFunction () { 
+// JSJ DEBUG HELPER -  REMOVE
+function debugPrintCallingFunction () {
     $file = 'n/a';
-    $func = 'n/a'; 
-    $line = 'n/a'; 
-    $debugTrace = debug_backtrace(); 
-    if (isset($debugTrace[1])) { 
-        $file = $debugTrace[1]['file'] ? $debugTrace[1]['file'] : 'n/a'; 
-        $line = $debugTrace[1]['line'] ? $debugTrace[1]['line'] : 'n/a'; 
-    } 
-    if (isset($debugTrace[2])) $func = $debugTrace[2]['function'] ? $debugTrace[2]['function'] : 'n/a'; 
-    echo "<pre>\n$file, $func, $line\n</pre>"; 
-} 
+    $func = 'n/a';
+    $line = 'n/a';
+    $debugTrace = debug_backtrace();
+    if (isset($debugTrace[1])) {
+        $file = $debugTrace[1]['file'] ? $debugTrace[1]['file'] : 'n/a';
+        $line = $debugTrace[1]['line'] ? $debugTrace[1]['line'] : 'n/a';
+    }
+    if (isset($debugTrace[2])) $func = $debugTrace[2]['function'] ? $debugTrace[2]['function'] : 'n/a';
+    echo "<pre>\n$file, $func, $line\n</pre>";
+}

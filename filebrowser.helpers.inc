@@ -2,13 +2,13 @@
 
 /**
  * @file
- * 
- * Misc helper functions. 
+ *
+ * Misc helper functions.
  */
 
 /**
- * Filter non-empty values from formaapi checkboxes. 
- * 
+ * Filter non-empty values from formaapi checkboxes.
+ *
  * @param $array source array
  * @return formapi checkboxes
  */
@@ -26,7 +26,7 @@ function _filebrowser_filter_checkboxes_result($array) {
 
 /**
  * Convert an array for formapi checkboxes comatibiility.
- * 
+ *
  * @param $properties source array
  * @return formapi checkboxes
  */
@@ -43,7 +43,7 @@ function _filebrowser_properties_to_checkboxes(& $properties) {
 }
 
 /**
- * UTF8 bullet-proof basename replacement. 
+ * UTF8 bullet-proof basename replacement.
  */
 function _filebrowser_safe_basename($path) {
   $path = rtrim($path, '/');
@@ -52,7 +52,7 @@ function _filebrowser_safe_basename($path) {
 }
 
 /**
- * UTF8 bullet-proof dirname replacement. 
+ * UTF8 bullet-proof dirname replacement.
  */
 function _filebrowser_safe_dirname($path) {
   $path = rtrim($path, '/');
@@ -73,14 +73,14 @@ function _filebrowser_safe_dirname($path) {
  */
 function _filebrowser_match_path($path, $patterns) {
   static $regexps = NULL;
-  
+
   if (!isset($regexps[$patterns])) {
     $regexps[$patterns] = '/^(' . preg_replace(array(
-        '/(\r\n?|\n)/', 
-        '/\\\\\*/' 
+        '/(\r\n?|\n)/',
+        '/\\\\\*/'
     ), array(
-        '|', 
-        '.*' 
+        '|',
+        '.*'
     ), preg_quote($patterns, '/')) . ')$/';
   }
   $result = preg_match($regexps[$patterns], _filebrowser_safe_basename($path)) == 1;

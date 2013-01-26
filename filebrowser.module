@@ -80,7 +80,7 @@ function filebrowser_form(&$node, &$form_state) {
     '#default_value' => !empty($node->title) ? $node->title : '',
     '#required' => TRUE,
   );
-  
+
   $form['folder_path'] = array(
     '#type' => 'textfield',
     '#title' => t('The system file path to the directory'),
@@ -175,7 +175,7 @@ function filebrowser_form(&$node, &$form_state) {
   $form['folder_uploads']['allow_overwrite'] = array(
     '#type' => 'checkbox',
     '#title' => t('Allow overwrites'),
-    '#description' => t('Allow files to be overwrotes.'),
+    '#description' => t('Allow files to be overwritten.'),
     '#default_value' => isset($node->folder_uploads->allow_overwrite) ? $node->folder_uploads->allow_overwrite : '',
   );
   $form['folder_uploads']['accepted_uploaded_files'] = array(
@@ -440,7 +440,7 @@ function filebrowser_view($node, $view_mode) {
     for ($i = 0; $i < count($path_elements); $i++) {
       $child_dir = $path_elements[$i] == '' ? '/' : $path_elements[$i];
       $breadcrumb_path .= $child_dir;
-      $fid = db_query("SELECT fid FROM {node_dir_listing_content} 
+      $fid = db_query("SELECT fid FROM {node_dir_listing_content}
                      WHERE path = :path", array(':path' => $breadcrumb_path)) ->fetchField();
     if ($child_dir == '/') {
       $label = $node->title;
@@ -521,7 +521,7 @@ function filebrowser_node_view($node, $view_mode) {
         'query' => drupal_get_destination()
       );
     }
-  
+
     $node->content['links']['filebrowser'] = array(
       '#theme' => 'links',
       '#links' => $links,
@@ -558,7 +558,7 @@ function filebrowser_form_upload($form, &$form_state, $node) {
   $form['#attributes'] = array(
       'enctype' => "multipart/form-data"
   );
-  
+
   _filebrowser_load_files($node);
   $form['#submit'][] = 'filebrowser_form_upload_submit';
   $form['#validate'][] = 'filebrowser_form_upload_validate';
@@ -586,11 +586,11 @@ function filebrowser_form_upload($form, &$form_state, $node) {
   $form['filebrowser_uploads']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Upload')
-  /*'#ahah' => array(
+  /* '#ahah' => array(
         'path' => 'upload/js',
         'wrapper' => 'attach-wrapper',
         'progress' => array('type' => 'bar', 'message' => t('Please wait...')),
-      ),*/
+      ), */
   );
   $form['#redirect'] = NULL;
   return $form;
@@ -679,9 +679,9 @@ function filebrowser_form_create_folder_validate($form, $form_state) {
   _filebrowser_load_files($node);
   $target = _filebrowser_encoding_to_fs($node, "{$node-> file_listing['.']['full-path']}/{$form_state['values']['folder_name']}");
 
- if (file_exists($target)) {
-   form_error($form['filebrowser_create_folder']['folder_name'], t("This folder already exists."));
- }
+  if (file_exists($target)) {
+    form_error($form['filebrowser_create_folder']['folder_name'], t("This folder already exists."));
+  }
 }
 
 /**
@@ -707,39 +707,6 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
   drupal_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
 }
 
-/*function filebrowser_form_actions($form, &$form_state, $table, $actions, $node) {
-  $form = array();
-  $form['#node'] = $node;
-  $form['table'] = array('#markup' => $table,);
-  foreach ($node->file_listing as $file_name => $data) {
-   $form["select_{$data['fid']}"] = array(
-     '#type' => 'checkbox',
-     '#default_value' => '',
-     '#prefix' => '<!-- ',
-     '#suffix' => ' -->'
-    );
-  }
-  
-  $options = array(
-      '' => t('choose an action')
-  );
-  foreach ($actions as $action) {
-    $options[$action['operation']] = $action['title'];
-  }
-  $form['action'] = array(
-      '#prefix' => '<br/><div class="container-inline">',
-      '#title' => t('actions'),
-      '#type' => 'select',
-      '#options' => $options
-  );
-  $form['submit'] = array(
-      '#value' => t('Process'),
-      '#type' => 'submit',
-      '#suffix' => '</div><br/>'
-  );
-  return $form;
-}*/
-
 function filebrowser_form_actions($form, &$form_state, $header, $options, $actions, $node) {
   $form = array();
   $form['#node'] = $node;
@@ -749,19 +716,19 @@ function filebrowser_form_actions($form, &$form_state, $header, $options, $actio
     '#options' => $options,
     '#multiple' => TRUE,
   );
-  // Normally the checkboxes are created by form_process_tableselect(). They are created manually here 
-  // to have the checkboxes behave the way we want it for filebrowser. 
+  // Normally the checkboxes are created by form_process_tableselect(). They are created manually here
+  // to have the checkboxes behave the way we want it for filebrowser.
   foreach ($options as $key => $data) {
     $form['table'][$key] = array(
-      '#type' => 'checkbox', 
-      '#title' => $data['fid'], 
-      '#title_display' => 'invisible', 
-      '#return_value' => 1, 
-      '#default_value' =>  NULL, 
-	  // disable the checkbox and hide it if this item has no fid (is not a selectable item)
-	  '#disabled' => empty($data['fid']) ? TRUE : FALSE,
+      '#type' => 'checkbox',
+      '#title' => $data['fid'],
+      '#title_display' => 'invisible',
+      '#return_value' => 1,
+      '#default_value' =>  NULL,
+    // disable the checkbox and hide it if this item has no fid (is not a selectable item)
+    '#disabled' => empty($data['fid']) ? TRUE : FALSE,
       '#attributes' => empty($data['fid']) ? array('style' => 'display:none;') : '',
-     );
+      );
   }
 
   $options = array(
@@ -787,8 +754,8 @@ function filebrowser_form_actions($form, &$form_state, $header, $options, $actio
 function filebrowser_form_actions_submit($form, $form_state) {
   $fids = array();
   if (!empty($form_state['values']['action'])) {
-	foreach ($form_state['values']['table'] as $key => $value) {
-	  if ($value) {
+  foreach ($form_state['values']['table'] as $key => $value) {
+    if ($value) {
         $fids[] = $form['table']['#options'][$key]['fid'];
       }
     }
@@ -884,7 +851,7 @@ function filebrowser_filebrowser_actions_info($node) {
   if ($node->file_listing['.']['files_count'] > 0) {
     if (_filebrowser_can_download_archive($node) && function_exists('zip_open')) {
       $actions[] = array(
-         
+
           'operation' => 'download',
           'title' => t("Download selected items as an ZIP archive (only files)")
       );
@@ -1090,7 +1057,7 @@ function filebrowser_theme() {
           'href' => NULL,
           'new' => NULL
       ),*/
-	),
+  ),
     'dir_listing_icon_view' => array(
       'variables' => array('node' => NULL),
       'file' => 'filebrowser.theme.inc'
@@ -1130,7 +1097,7 @@ function filebrowser_node_mass_update_thumbnails($nodes) {
 /* In D6 -version this was hook_links || now moved to hook_view
  * @return array of links
  */
-// CHECK IF there are more links from D6 JSJ FIXME 
+// CHECK IF there are more links from D6 JSJ FIXME
 function _filebrowser_links($node) {
 
 }

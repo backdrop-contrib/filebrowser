@@ -4,7 +4,7 @@
  *
  * Several theme functions for filebrowser
  */
- 
+
 /**
  *
  * Enter description here ...
@@ -33,14 +33,14 @@ function theme_dir_listing_icon_view($node) {
       $pos = strrpos($data['display-name'], ".");
       $data[FILEBROWSER_DATA_NAME_DISPLAY_NAME] = substr($data['display-name'], 0, $pos);
     }
-	$variables = array(
-	  'data' => $data,
-	  'thumbnail' => _filebrowser_thumbnails_generate($node, $data),
+    $variables = array(
+      'data' => $data,
+    'thumbnail' => _filebrowser_thumbnails_generate($node, $data),
       'href' => $data['url'],
-      'title' =>$data['display-name'] == '..' ? t('Go up') : $data['display-name'],
+      'title' => $data['display-name'] == '..' ? t('Go up') : $data['display-name'],
       'new' => theme('mark', array('type' => $data['status'])),
-	  'description' => $data['description'],
-	);
+    'description' => $data['description'],
+  );
     $output .= theme('dir_listing_icon', $variables);
   }
   $output .= "</div>";
@@ -96,8 +96,8 @@ function theme_dir_listing_list_view($node) {
   // Header building
   $header = array();
   if ($has_actions) {
-	// data column removed because we use theme_tableselect to 
-	// build the checkboxes
+  // data column removed because we use theme_tableselect to
+  // build the checkboxes
   }
 
   // Considered each file (or directory)
@@ -117,7 +117,7 @@ function theme_dir_listing_list_view($node) {
     }
     if ($has_actions) {
       // checkboxes are now provided by theme_tableselect
-	  $unsorted_rows[$file_name]['fid'] = ($data['mime-type'] != 'folder/parent' ? "{$data['fid']}" : '');
+    $unsorted_rows[$file_name]['fid'] = ($data['mime-type'] != 'folder/parent' ? "{$data['fid']}" : '');
     }
     foreach ($column_names as $column_name => $column_spec) {
       if (isset($node->folder_presentation->visible_columns[$column_name]) && $node->folder_presentation->visible_columns[$column_name]) {
@@ -274,7 +274,7 @@ function theme_dir_listing_list_view($node) {
 
     if ($has_actions) {
       // in D7 we dont send the table to the form builder. The table is build by theme_tableselect
-	  $output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
+    $output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
     }
     return $output;
   } // Directory is not empty
@@ -284,13 +284,13 @@ function theme_dir_listing_list_view($node) {
 // Temp sollution by using the already rendered img $form['thumbnail']['#value']
 function theme_dir_listing_metadata_group($array_form) {
   $form = $array_form[''];
-  //$thumbnail = drupal_render($form['thumbnail']); 
+  //$thumbnail = drupal_render($form['thumbnail']);
   $output = "<table>";
   foreach (element_children($form) as $key) {
     if ($key != 'thumbnail') {
-      //$output .= "<tr><td>$thumbnail</td><td>" 
-      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>" 
-    . drupal_render($form[$key]) 
+      //$output .= "<tr><td>$thumbnail</td><td>"
+      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>"
+    . drupal_render($form[$key])
     . "</td></tr>";
       $thumbnail = '';
     }

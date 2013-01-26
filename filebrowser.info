@@ -5,5 +5,3 @@ package = FileBrowser
 version = 7.x-3.y
 core = "7.x"
 project = "filebrowser"
-
-

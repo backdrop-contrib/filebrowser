@@ -177,7 +177,7 @@ function filebrowser_update_thumbnails($fids) {
       }
     }
   }
-//  echo "<pre>"; var_dump($batch); exit();
+//   echo "<pre>"; var_dump($batch); exit();
   if (count($batch['operations'])) {
     batch_set($batch);
     batch_process($_GET['destination']);

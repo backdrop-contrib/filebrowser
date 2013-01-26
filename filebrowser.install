@@ -330,7 +330,7 @@ function filebrowser_update_6211() {
   }
   $schema = filebrowser_schema();
   db_create_table($ret, 'node_dir_listing', $schema['node_dir_listing']);
-  $cursor = db_query("select * from {filebrowser}");
+  $cursor = db_query("SELECT * FROM {filebrowser}");
   while ($node = db_fetch_object($cursor)) {
     $properties = (object)array(
       'folder_rights' => (object)array(
