@@ -924,7 +924,7 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       header("Content-Type: " . file_get_mimetype($filename));
       header("Content-Transfer-Encoding: binary");
       header("Content-Length: " . filesize($file));
-      if (eregi("MSIE", getenv("HTTP_USER_AGENT")) || eregi("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
+      if (stristr("MSIE", getenv("HTTP_USER_AGENT")) || stristr("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
         header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
       }
       else {
