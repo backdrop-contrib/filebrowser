@@ -183,7 +183,7 @@ function _filebrowser_url_query($options = array()) {
   $query = array();
   foreach ($_GET as $key => $value) {
     if ($key != 'q') {
-      $query[$key] = urlencode($value);
+      $query[$key] = urlencode(filter_xss($value));
     }
   }
   return $query;
