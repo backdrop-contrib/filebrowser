@@ -265,16 +265,15 @@ function theme_dir_listing_list_view($node) {
     //$rows = array_merge($just_folders, $just_files);
     $rows = array();
     foreach ($just_folders as $data) {
-      $rows[] = $unsorted_rows[$data['display-name']];
+      $rows[$data['fid']] = $unsorted_rows[$data['display-name']];
     }
     foreach ($just_files as $data) {
-      $rows[] = $unsorted_rows[$data['display-name']];
+      $rows[$data['fid']] = $unsorted_rows[$data['display-name']];
     }
-      $output = theme('table', array('header' => $header, 'rows' => $rows));
-
+    $output = theme('table', array('header' => $header, 'rows' => $rows));
     if ($has_actions) {
-      // in D7 we dont send the table to the form builder. The table is build by theme_tableselect
-    $output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
+      // in D7 we don't send the table to the form builder. The table is build by theme_tableselect
+		$output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
     }
     return $output;
   } // Directory is not empty

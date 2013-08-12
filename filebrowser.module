@@ -718,30 +718,29 @@ function filebrowser_form_actions($form, &$form_state, $header, $options, $actio
   );
   // Normally the checkboxes are created by form_process_tableselect(). They are created manually here
   // to have the checkboxes behave the way we want it for filebrowser.
-  foreach ($options as $key => $data) {
+  /*  foreach ($options as $key => $data) {
     $form['table'][$key] = array(
       '#type' => 'checkbox',
       '#title' => $data['fid'],
-      '#title_display' => 'invisible',
-      '#return_value' => 1,
-      '#default_value' =>  NULL,
-    // disable the checkbox and hide it if this item has no fid (is not a selectable item)
-    '#disabled' => empty($data['fid']) ? TRUE : FALSE,
+      //'#title_display' => 'invisible',
+      //'#return_value' =>  'foop',
+      '#default_value' => 0,
+      // disable the checkbox and hide it if this item has no fid (is not a selectable item)
+      '#disabled' => empty($data['fid']) ? TRUE : FALSE,
       '#attributes' => empty($data['fid']) ? array('style' => 'display:none;') : '',
       );
-  }
-
-  $options = array(
-      '' => t('choose an action')
+  }*/
+  $fb_options = array(
+    '' => t('choose an action')
   );
   foreach ($actions as $action) {
-    $options[$action['operation']] = $action['title'];
+    $fb_options[$action['operation']] = $action['title'];
   }
   $form['action'] = array(
       '#prefix' => '<br/><div class="container-inline">',
       '#title' => t('actions'),
       '#type' => 'select',
-      '#options' => $options
+      '#options' => $fb_options
   );
   $form['submit'] = array(
       '#value' => t('Process'),
@@ -752,14 +751,15 @@ function filebrowser_form_actions($form, &$form_state, $header, $options, $actio
 }
 
 function filebrowser_form_actions_submit($form, $form_state) {
+  // Collect de selected checkboxes in put them in array $fid
   $fids = array();
   if (!empty($form_state['values']['action'])) {
   foreach ($form_state['values']['table'] as $key => $value) {
     if ($value) {
-        $fids[] = $form['table']['#options'][$key]['fid'];
-      }
+      $fids[] = $form['table']['#options'][$key]['fid'];
     }
-    $result = module_invoke_all('filebrowser_action_process', $form['#node'], $form_state['values']['action'], $fids);
+	}
+  $result = module_invoke_all('filebrowser_action_process', $form['#node'], $form_state['values']['action'], $fids);
     if ($result) {
       return $result;
     }
@@ -1099,5 +1099,4 @@ function filebrowser_node_mass_update_thumbnails($nodes) {
  */
 // CHECK IF there are more links from D6 JSJ FIXME
 function _filebrowser_links($node) {
-
 }
