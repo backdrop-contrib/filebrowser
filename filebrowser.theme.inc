@@ -80,7 +80,7 @@ function theme_dir_listing_list_view($node) {
   $unsorted_rows = array();
 
   // add optional colunmns
-  $node->folder_presentation->visible_columns['description'] = TRUE;
+  // $node->folder_presentation->visible_columns['description'] = TRUE;
 
   // Visible columns
   $visible_columns = array();
