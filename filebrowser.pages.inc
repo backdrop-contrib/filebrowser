@@ -29,8 +29,11 @@
 
 /**
  * Callback for filebrowser_download/%node menu.
+ * @param $fid
+ * @return null|string
  */
 function filebrowser_page_download($fid) {
+  debug($fid, 'fid line');
   $cleanup = NULL;
   $files_fid = NULL;
   if (strpos($fid, ':')) {
@@ -38,6 +41,8 @@ function filebrowser_page_download($fid) {
     $files_fid = explode(',', $files_fid);
   }
   $content = _filebrowser_node_content_load($fid);
+ //
+  debug($content, 'content line 42 function filebrowser_page_download');
   $node = NULL;
   $target = NULL;
   if ($content) {
@@ -45,10 +50,21 @@ function filebrowser_page_download($fid) {
     $target = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['path']);
   }
   if (!$content || !$node || !_filebrowser_can_download_file($node) || !$target) {
+    debug($content);
+    debug($node);
+    debug($target);
     drupal_access_denied();
     exit();
   }
-
+  if (is_s3_dir($target) && module_exists('s3_fb')) {
+    $client = awssdk_get_client('s3');
+    $client-> registerStreamWrapper();
+    $is_s3 = true;
+  }
+  else {
+    $is_s3 = false;
+  }
+  //debug($target, '$target @ function filebrowser_page_download');
   if (is_dir($target)) {
     if (!function_exists("zip_open")) {
       drupal_set_message(t("No ZIP support found in PHP installation, please contact your administrator"));
@@ -69,6 +85,7 @@ function filebrowser_page_download($fid) {
       foreach ($node->file_listing as $file_name => $file_data) {
         if (($file_data['kind'] === 0) && (!$files_fid || in_array($file_data['fid'], $files_fid))) {
           $fs_filename = realpath(_filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . "/" . $file_data['relative-path']));
+          debug($fs_filename, 'fs_filename after realpath');
           $zip->addFile($fs_filename, $file_name);
         }
       }
@@ -76,12 +93,14 @@ function filebrowser_page_download($fid) {
     }
     else {
       return t("Unable to create temporary zip file '@file'", array(
-          file => $target
+          '@file' => $target,
       ));
     }
   }
 
   $decoded_file = _filebrowser_encoding_from_fs($node, $target);
+  //
+  debug($decoded_file, '$decoded_file line 94');
 
   $result = module_invoke_all('filebrowser_download_manager_process', 'private', $target, $decoded_file);
   if ($result) {

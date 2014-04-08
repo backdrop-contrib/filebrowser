@@ -5,3 +5,10 @@ package = FileBrowser
 version = 7.x-3.y
 core = "7.x"
 project = "filebrowser"
+
+; Information added by drupal.org packaging script on 2013-10-10
+version = "7.x-2.3"
+core = "7.x"
+project = "filebrowser"
+datestamp = "1381372293"
+

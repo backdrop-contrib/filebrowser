@@ -54,6 +54,7 @@ define('FILEBROWSER_DATA_NAME_DESCRIPTION', 'description');
  * Metadata access handler (see hook_menu).
  */
 function _filebrowser_metadata_access($fid) {
+  //debug  echo '_filebrowser_metadata_access || fid is ; ' . $fid . '<br>';
   $content = _filebrowser_node_content_load($fid);
   $node = node_load($content['nid']);
   return $node->type == 'dir_listing' && node_access("update", $node);
@@ -69,7 +70,6 @@ function _filebrowser_get_node_root(& $node) {
   $result = $node->folder_path;
   // token_replace is in D7 core *** if (module_exists("token")) {
   $result = token_replace($result, array('type' => 'global', 'object' => NULL, 'leading' => '[', $trailing = ']'));
-
   return $result;
 }
 
@@ -210,6 +210,7 @@ function _filebrowser_encoding_from_fs(&$node, $source) {
  * @return re-encoded string
  */
 function _filebrowser_encoding_to_fs(&$node, $source) {
+  // debug echo 'source : ' . $source . '<br>';
   return strcasecmp($node->folder_presentation->encoding, 'UTF-8') == 0 ? $source : mb_convert_encoding($source, $node->folder_presentation->encoding, "UTF-8");
 }
 
@@ -253,16 +254,31 @@ function _filebrowser_node_content_load($fid) {
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   global $user, $base_url;
 
+  // if this is an s3 directory create a s3 client and streamwrapper
+  if ((is_s3_dir($node-> folder_path)) && (module_exists('s3_fb'))) {
+    $client = awssdk_get_client('s3');
+    $client-> registerStreamWrapper();
+    $is_s3 = true;
+    //remove:     echo 'is S3' . '<br>';
+  }
+  else {
+    $is_s3 = false;
+  }
+
   // folder path are node/NID/FID?QUERY
   if (!$fid && (arg(0) == 'node' && is_numeric(arg(2)))) {
     $fid = arg(2);
+    //debug:     echo 'fid = : ' . $fid . '<br>';
   }
 
   // Select current file record according to fid
   if ($fid) {
     $content = _filebrowser_node_content_load($fid);
+    // debug($content);
     if (!$content) {
+
       drupal_goto("node/{$node->nid}");
+      //debug:  echo 'No content' .  '<br>';exit();
     }
     $relative_path = $content['path'];
   }
@@ -270,7 +286,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $relative_path = '/';
   }
   $is_subdir = $relative_path != '/';
-
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
   if ($is_subdir && !_filebrowser_can_explore_subfolders($node)) {
@@ -291,6 +306,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       }
     }
   }
+
   // If this folder has already been processed, take it result
   static $cache = array();
   $cid = "{$node->nid}::{$relative_path}";
@@ -313,12 +329,25 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // Build full path
   $fs_root=_filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node));
 
-  $fs_root = realpath($fs_root);
+  //debug echo 'sf_root line 322 : '  .$fs_root . '<br>';
+  if (!$is_s3) {
+    $fs_root = realpath($fs_root);  // no realpath in case of s3
+  }
+
   if ($fs_root === FALSE) {
     drupal_set_message(t('Configured folder is not readable or is not a directory.'), 'error');
     return;
   }
-  $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
+  if ($is_s3) {
+    $fs_root = $fs_root . _filebrowser_encoding_to_fs($node, $relative_path);
+    // FIXME: add end slash if not present. This is hackish!
+    $fs_root = (substr($fs_root, -1,1) == '/' ? $fs_root : $fs_root . '/');
+  }
+  else {
+    $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
+  }
+
+  // debug   echo 'fs_root (full path) 350 after encoding : ' . $fs_root . '<br>';
   // Load meta-data
   $file_metadata = array();
   // Iterate over files
@@ -329,6 +358,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   if (is_dir($fs_root) && $handler = opendir($fs_root)) {
     while (($fs_filename = readdir($handler)) !== FALSE) {
       $fs_file_full_path = $fs_root . $fs_filename;
+     // echo $fs_file_full_path . '<br>';
 
       // Check FS reading rights
       if (!is_readable($fs_file_full_path)) {
@@ -452,6 +482,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // in DB (have a unique ID for each file and path) to get rid of nationnal character
   // mess in URLS.
   $to_delete = array();
+  // Verder: de root krijgt i.g.v.s3 geen fid mee. 
   foreach ($db_content as $path => &$record) {
     if (!isset($record['exists'])) {
       $to_delete[] = $record['fid'];

@@ -296,30 +296,38 @@ function filebrowser_form(&$node, &$form_state) {
  */
 function filebrowser_validate(& $node) {
   $node->folder_presentation = (object)$node->folder_presentation;
-  $path = _filebrowser_get_node_root($node);
+  $path = _filebrowser_get_node_root($node);                  // get the folder path
   $encoded_path = _filebrowser_encoding_to_fs($node, $path);
-  if (!is_dir($encoded_path)) {
-    $success = mkdir($encoded_path, 0777, TRUE);
-    if (!$success) {
-      form_set_error('file_path', t('The directory %dir is not a valid directory and I\'m unable to help this.', array(
-          '%dir' => $path
-      )));
-    }
-    else {
-      drupal_set_message(t('The directory %dir has been created.', array(
-          '%dir' => $path
-      )));
-    }
+  // check if this is an amazon s3 path
+  if (module_exists('s3_fb') && (is_s3_dir($encoded_path))) {
+    // further validation and handling by s3_fb module
+      s3_filebrowser_validate($encoded_path);
   }
   else {
-    if (!is_readable($encoded_path)) {
-      form_set_error('file_path', t('The directory %dir is not readable.', array(
+    if (!is_dir($encoded_path)) {
+      $success = mkdir($encoded_path, 0777, TRUE);
+      if (!$success) {
+        form_set_error('file_path', t('The directory %dir is not a valid directory and I\'m unable to help this.', array(
           '%dir' => $path
-      )));
+         )));
+      }
+      else {
+        drupal_set_message(t('The directory %dir has been created.', array(
+          '%dir' => $path
+         )));
+      }
+    }
+    else {
+      if (!is_readable($encoded_path)) {
+        form_set_error('file_path', t('The directory %dir is not readable.', array(
+            '%dir' => $path
+        )));
+      }
     }
   }
 }
 
+//todo : is this valid for D7?
 /**
  * hook_db_rewrite_sql implementation.
  */
@@ -504,6 +512,7 @@ function filebrowser_view($node, $view_mode) {
  * Implements hook_node_view().
  */
 function filebrowser_node_view($node, $view_mode) {
+  // debug($node-> file_listing);
   if ($node->type == 'dir_listing' && $view_mode == 'full') {
     $links = array();
     if (_filebrowser_metadata_access($node->file_listing['.']['fid'])) {
@@ -868,11 +877,18 @@ function filebrowser_filebrowser_actions_info($node) {
 
 /**
  * hook_filebrowser_action_process implementation
+ * When downloading files $fids will be configured as
+ * fid_of_root:fid,fid,fid etc.
+ *
+ * @param $node
+ * @param $action string action selected by dropdown list on download form.
+ * @param $fids string id's of files to retrieve
  */
 function filebrowser_filebrowser_action_process($node, $action, $fids) {
   switch ($action) {
     case 'download' :
       $root_fid = $node->file_listing['.']['fid'];
+      debug($root_fid);
       if (count($fids) > 0) {
         $root_fid .= ":" . implode(',', $fids);
       }
