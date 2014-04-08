@@ -1,0 +1,5 @@
+name = S3 adapter for Filebrowser
+description = Amazon S3 adapter for Filebrowser module
+package = Yagosoft
+core = 7.x
+dependencies[] = awssdk2

@@ -1,0 +1,32 @@
+<?php
+
+/**
+ * Check if a given path is an amazon directory
+ * @param $dir Directory to check.
+ * @return bool TRUE if it is an amazon directory, FALSE if not.
+ */
+function is_s3_dir(&$dir) {
+  $dir_prefix = substr($dir, 0, 5);
+  if ($dir_prefix == 's3://') {
+   /* $end_slash = substr($dir, -1,1);
+    if ($end_slash != "/") {
+      $dir .= '/';
+    }*/
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+/**
+ * implements hook_form_alter
+ * Enter S3 information on dir-listing node-edit form
+ * @param $form
+ * @param $form_state
+ * @param $form_id
+ */
+function s3_fb_form_dir_listing_node_form_alter(&$form, &$form_state, $form_id) {
+  $form['folder_path']['#description'] .= '<br>' . t('S3 Filebrowser module installed. To use Amazon S3 storage enter the full path to your storage location (S3://your_bucket/directory)');
+  $form['folder_rights']['download_archive']['#description'] .= '<br>' . t('S3 Filebrowser module installed.') . '<br><strong>' . t('Folder download is not supported yet by S3 Filebrowser. Please deselect this option.');
+}
