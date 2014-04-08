@@ -1,5 +1,6 @@
-name = S3 adapter for Filebrowser
-description = Amazon S3 adapter for Filebrowser module
-package = Yagosoft
+name = Amazon S3 adapter for Filebrowser
+description = Enable this module to be able to use Amazon S3 storage with your filebrowser node.
+package = FileBrowser
 core = 7.x
+version = 7.x-1.x
 dependencies[] = awssdk2
