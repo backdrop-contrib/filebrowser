@@ -347,7 +347,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
   }
 
-  // debug   echo 'fs_root (full path) 350 after encoding : ' . $fs_root . '<br>';
+  //  debug($fs_root, 'fs_root (full path) 350 after encoding line 351');
+
   // Load meta-data
   $file_metadata = array();
   // Iterate over files
@@ -357,9 +358,12 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   $folder_count = 0;
   if (is_dir($fs_root) && $handler = opendir($fs_root)) {
     while (($fs_filename = readdir($handler)) !== FALSE) {
+      echo 'filename : ' . $fs_filename . "<br>";
       $fs_file_full_path = $fs_root . $fs_filename;
-     // echo $fs_file_full_path . '<br>';
-
+     //
+      debug($fs_file_full_path);
+      //for s3:  "s3://bucket/dir/dir/"
+      // non-s3 '/var/www/vhosts/yagoserver.com/httpdocs/dev7/drupal/sites/default/files/checkroot/.'
       // Check FS reading rights
       if (!is_readable($fs_file_full_path)) {
         continue;
@@ -479,10 +483,11 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
 
   // Synchronize what we seen on filesystem with what is stored in database
   // We also build an access URL for each file as it is why we stored this stuff
-  // in DB (have a unique ID for each file and path) to get rid of nationnal character
+  // in DB (have a unique ID for each file and path) to get rid of national character
   // mess in URLS.
   $to_delete = array();
-  // Verder: de root krijgt i.g.v.s3 geen fid mee. 
+  // FIXME: de root krijgt i.g.v.s3 geen fid mee.
+  //debug($db_content, 'db_content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
     if (!isset($record['exists'])) {
       $to_delete[] = $record['fid'];
@@ -491,6 +496,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       if (!isset($record['fid'])) {
     drupal_write_record('node_dir_listing_content', $record);
       }
+
 
       $key = $record['display-name'];
       $files[$key]['fid'] = $record['fid'];
