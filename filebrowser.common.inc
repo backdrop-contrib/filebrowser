@@ -249,7 +249,11 @@ function _filebrowser_node_content_load($fid) {
 
 /**
  * Load data from current path.
- * @param source node
+ *
+ * @param object $node node of type dir-listing
+ * @param integer $fid
+ * @param bool $rebuild
+ * @return mixed
  */
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   global $user, $base_url;
