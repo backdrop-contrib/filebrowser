@@ -364,8 +364,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     while (($fs_filename = readdir($handler)) !== FALSE) {
       echo 'filename : ' . $fs_filename . "<br>";
       $fs_file_full_path = $fs_root . $fs_filename;
-     //
-      debug($fs_file_full_path);
+     //      debug($fs_file_full_path);
       //for s3:  "s3://bucket/dir/dir/"
       // non-s3 '/var/www/vhosts/yagoserver.com/httpdocs/dev7/drupal/sites/default/files/checkroot/.'
       // Check FS reading rights
