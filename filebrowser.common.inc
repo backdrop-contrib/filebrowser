@@ -256,6 +256,8 @@ function _filebrowser_node_content_load($fid) {
  * @return mixed
  */
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
+  debugPrintCallingFunction ();
+  //print_r(arg()); exit();
   global $user, $base_url;
 
   // if this is an s3 directory create a s3 client and streamwrapper
@@ -272,10 +274,10 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // folder path are node/NID/FID?QUERY
   if (!$fid && (arg(0) == 'node' && is_numeric(arg(2)))) {
     $fid = arg(2);
-    //debug:     echo 'fid = : ' . $fid . '<br>';
   }
+  //debug:  echo 'fid = : ' . $fid . '<br>';exit();
 
-  // Select current file record according to fid
+  // Select current file record according to fid - you are requesting a specific file or subdir: node/23/47
   if ($fid) {
     $content = _filebrowser_node_content_load($fid);
     // debug($content);
@@ -286,9 +288,11 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     }
     $relative_path = $content['path'];
   }
+  // you are requesting the basic node like: /node/23
   else {
     $relative_path = '/';
   }
+  // echo 'relative path : ' . $relative_path; exit();
   $is_subdir = $relative_path != '/';
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
@@ -322,7 +326,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     return $node->file_listing = $cache[$cid];
   }
 
-  // Load database folder content
+  // Load database folder content // first time after node creation $db_content = NULL
   $db_content = array();
   $query = db_query("SELECT * FROM {node_dir_listing_content} where nid = :nid and root = :root",
     array(':nid' => $node->nid, ':root' => $relative_path));
@@ -331,7 +335,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     }
 
   // Build full path
-  $fs_root=_filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node));
+  $fs_root = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node));
 
   //debug echo 'sf_root line 322 : '  .$fs_root . '<br>';
   if (!$is_s3) {
@@ -354,7 +358,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   //  debug($fs_root, 'fs_root (full path) 350 after encoding line 351');
 
   // Load meta-data
-  $file_metadata = array();
+  $file_metadata = array();                    // CLEANUP: var not in use
+
   // Iterate over files
   $files = array();
   $files_count = 0;
@@ -362,7 +367,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   $folder_count = 0;
   if (is_dir($fs_root) && $handler = opendir($fs_root)) {
     while (($fs_filename = readdir($handler)) !== FALSE) {
-      echo 'filename : ' . $fs_filename . "<br>";
+      //echo 'filename : ' . $fs_filename . "<br>";
       $fs_file_full_path = $fs_root . $fs_filename;
      //      debug($fs_file_full_path);
       //for s3:  "s3://bucket/dir/dir/"
@@ -481,6 +486,42 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $files['.']['files_count'] = $files_count;
     $files['.']['folders_count'] = $folder_count;
     $files['.']['relative-path'] = $relative_path;
+    //debug($files['.'], 'Print voor de hack');
+
+    // FIXME: this is hackish.
+    // Amazon S3 filesystem does not provide . and .. files. Therefore we will create them manually
+    // to maintain same operation as regular FileBrowser FS.
+    // FIXME: some properties should be set by function filebrowser_filebrowser_metadata_get()
+    if ($is_s3) {
+      $files['.']['nid'] = $node-> nid;
+      $files['.']['display-name'] = '.';
+      $files['.']['relative-path'] = '/';
+      $files['.']['full-path'] = $fs_root;
+      $files['.']['status'] = MARK_READ;
+      $files['.']['kind'] = 1;
+      // fixme: only this is a directory
+      if (!isset($db_content['/'])) {
+        $db_content['/'] = array(
+          'nid' => $node->nid,
+          'root' => '/',
+          'path' => '/',
+        );
+      }
+      $db_content['/']['exists'] = TRUE;
+      $db_content['/']['display-name'] = '.';
+    }
+    // debug($files['.'], 'Print na de hack');
+
+ /*   fb result:
+
+  'created' => 1396946656,
+  'modified' => 1396946429,
+  'mime-type' => 'folder',
+  'description' => '',
+
+  s3: */
+
+
     closedir($handler);
   }
 
@@ -490,14 +531,17 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // mess in URLS.
   $to_delete = array();
   // FIXME: de root krijgt i.g.v.s3 geen fid mee.
-  //debug($db_content, 'db_content prior to saving to the DB');
+  //
+  debug($db_content, 'DB content prior to saving to the DB');
+  debug($files, 'filesystem content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
     if (!isset($record['exists'])) {
       $to_delete[] = $record['fid'];
     }
     else {
       if (!isset($record['fid'])) {
-    drupal_write_record('node_dir_listing_content', $record);
+        echo 'writing : ' . $path . '<br>';
+        drupal_write_record('node_dir_listing_content', $record);
       }
 
 
@@ -696,6 +740,7 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
 
 // JSJ DEBUG HELPER -  REMOVE
 function debugPrintCallingFunction () {
+    static $i;
     $file = 'n/a';
     $func = 'n/a';
     $line = 'n/a';
