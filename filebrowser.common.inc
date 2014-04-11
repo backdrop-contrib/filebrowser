@@ -232,18 +232,19 @@ function _filebrowser_node_content_delete($node) {
  * @return content record
  */
 function _filebrowser_node_content_load($fid) {
+/* Was for debugging - please leave it in for the time
   if (is_array($fid)) {
     debugPrintCallingFunction();
     exit;
-  }
+  }*/
   static $contents = array();
   if (isset($contents[$fid])) {
     return $contents[$fid];
   }
   $contents[$fid] = (array)db_query("
-     SELECT *
-     FROM {node_dir_listing_content}
-     WHERE fid = :fid", array(':fid' => $fid))-> fetch();
+    SELECT *
+    FROM {node_dir_listing_content}
+    WHERE fid = :fid", array(':fid' => $fid))-> fetch();
   return $contents[$fid];
 }
 
@@ -256,16 +257,13 @@ function _filebrowser_node_content_load($fid) {
  * @return mixed
  */
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
-  debugPrintCallingFunction ();
-  //print_r(arg()); exit();
   global $user, $base_url;
 
-  // if this is an s3 directory create a s3 client and streamwrapper
+  // if this is an s3 directory create a s3 client and AwsStreamWrapper
   if ((is_s3_dir($node-> folder_path)) && (module_exists('s3_fb'))) {
     $client = awssdk_get_client('s3');
     $client-> registerStreamWrapper();
     $is_s3 = true;
-    //remove:     echo 'is S3' . '<br>';
   }
   else {
     $is_s3 = false;
@@ -280,11 +278,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // Select current file record according to fid - you are requesting a specific file or subdir: node/23/47
   if ($fid) {
     $content = _filebrowser_node_content_load($fid);
-    // debug($content);
     if (!$content) {
-
       drupal_goto("node/{$node->nid}");
-      //debug:  echo 'No content' .  '<br>';exit();
     }
     $relative_path = $content['path'];
   }
@@ -292,7 +287,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   else {
     $relative_path = '/';
   }
-  // echo 'relative path : ' . $relative_path; exit();
   $is_subdir = $relative_path != '/';
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
@@ -326,18 +320,17 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     return $node->file_listing = $cache[$cid];
   }
 
-  // Load database folder content // first time after node creation $db_content = NULL
+  // Load database folder content
+  // first time after node creation $db_content = NULL; there is nothing in the DB
   $db_content = array();
-  $query = db_query("SELECT * FROM {node_dir_listing_content} where nid = :nid and root = :root",
-    array(':nid' => $node->nid, ':root' => $relative_path));
-    foreach ($query as $data) {
-      $db_content[$data->path] = (array)$data;
-    }
+  $query = db_query("SELECT * FROM {node_dir_listing_content} where nid = :nid and root = :root", array(':nid' => $node->nid, ':root' => $relative_path));
+  foreach ($query as $data) {
+    $db_content[$data->path] = (array)$data;
+  }
 
   // Build full path
   $fs_root = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node));
 
-  //debug echo 'sf_root line 322 : '  .$fs_root . '<br>';
   if (!$is_s3) {
     $fs_root = realpath($fs_root);  // no realpath in case of s3
   }
@@ -355,8 +348,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
   }
 
-  //  debug($fs_root, 'fs_root (full path) 350 after encoding line 351');
-
   // Load meta-data
   $file_metadata = array();                    // CLEANUP: var not in use
 
@@ -369,9 +360,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     while (($fs_filename = readdir($handler)) !== FALSE) {
       //echo 'filename : ' . $fs_filename . "<br>";
       $fs_file_full_path = $fs_root . $fs_filename;
-     //      debug($fs_file_full_path);
-      //for s3:  "s3://bucket/dir/dir/"
-      // non-s3 '/var/www/vhosts/yagoserver.com/httpdocs/dev7/drupal/sites/default/files/checkroot/.'
       // Check FS reading rights
       if (!is_readable($fs_file_full_path)) {
         continue;
@@ -486,7 +474,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $files['.']['files_count'] = $files_count;
     $files['.']['folders_count'] = $folder_count;
     $files['.']['relative-path'] = $relative_path;
-    //debug($files['.'], 'Print voor de hack');
 
     // FIXME: this is hackish.
     // Amazon S3 filesystem does not provide . and .. files. Therefore we will create them manually
@@ -499,7 +486,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       $files['.']['full-path'] = $fs_root;
       $files['.']['status'] = MARK_READ;
       $files['.']['kind'] = 1;
-      // fixme: only this is a directory
+      // fixme: only if this is a directory
       if (!isset($db_content['/'])) {
         $db_content['/'] = array(
           'nid' => $node->nid,
@@ -510,17 +497,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       $db_content['/']['exists'] = TRUE;
       $db_content['/']['display-name'] = '.';
     }
-    // debug($files['.'], 'Print na de hack');
-
- /*   fb result:
-
-  'created' => 1396946656,
-  'modified' => 1396946429,
-  'mime-type' => 'folder',
-  'description' => '',
-
-  s3: */
-
 
     closedir($handler);
   }
@@ -530,10 +506,9 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // in DB (have a unique ID for each file and path) to get rid of national character
   // mess in URLS.
   $to_delete = array();
-  // FIXME: de root krijgt i.g.v.s3 geen fid mee.
-  //
-  debug($db_content, 'DB content prior to saving to the DB');
-  debug($files, 'filesystem content prior to saving to the DB');
+
+  // debug($db_content, 'DB content prior to saving to the DB');
+  // debug($files, 'filesystem content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
     if (!isset($record['exists'])) {
       $to_delete[] = $record['fid'];
@@ -543,7 +518,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         echo 'writing : ' . $path . '<br>';
         drupal_write_record('node_dir_listing_content', $record);
       }
-
 
       $key = $record['display-name'];
       $files[$key]['fid'] = $record['fid'];
