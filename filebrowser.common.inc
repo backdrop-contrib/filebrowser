@@ -257,6 +257,7 @@ function _filebrowser_node_content_load($fid) {
  * @return mixed
  */
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
+  debugPrintCallingFunction ();
   global $user, $base_url;
 
   // if this is an s3 directory create a s3 client and AwsStreamWrapper
@@ -333,6 +334,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
 
   if (!$is_s3) {
     $fs_root = realpath($fs_root);  // no realpath in case of s3
+
   }
 
   if ($fs_root === FALSE) {
@@ -346,6 +348,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   }
   else {
     $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
+   // debug($fs_root, 'Line 350 - after realpath + _fb_encoding to fs');
+   echo($fs_root . ' || Line 350 - after realpath + _fb_encoding to fs <br>');
   }
 
   // Load meta-data
@@ -369,6 +373,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       if ($fs_filename == '.' || $fs_filename == '..') {
         // We are in the root folder, so we don't need an "up" entry
         if ($fs_filename == '..' && !$is_subdir) {
+          // file is .. but we are not in a sub directory, so we don't assign it to DB
           continue;
         }
       }
@@ -398,11 +403,10 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
           $content = (array)db_query("
             SELECT *
             FROM {node_dir_listing_content}
-            WHERE nid=:nid and path=:path", array(':nid' => $node-> nid, ':path' => $file_relative_path))-> fetch();
+            WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => $file_relative_path))-> fetch();
         if ($content) {
           $db_content[$file_relative_path] = &$content;
         }
-
       }
       else {
         $file_relative_path = $relative_path . ($relative_path != '/' ? '/' : '') . $filename;
@@ -428,6 +432,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
           'full-path' => rtrim($fs_root, '/') . "/" . $fs_filename,
           'status' => MARK_READ
       );
+      debug($files[$filename]['full-path'], ' full path voor ' . $filename);
       $result = module_invoke_all('filebrowser_metadata_get', $files[$filename]);
       if ($result && is_array($result)) {
         $files[$filename] = array_merge($files[$filename], $result);
@@ -515,7 +520,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     }
     else {
       if (!isset($record['fid'])) {
-        echo 'writing : ' . $path . '<br>';
         drupal_write_record('node_dir_listing_content', $record);
       }
 
@@ -706,9 +710,14 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
       $file_name .= ".{$path_info_old['extension']}";
     }
   }
+  //debug($file_name, 'Line 709 - file name processed by _filebrowser_build_new_upload_file_name');
   _filebrowser_load_files($node);
 
   $target = _filebrowser_encoding_to_fs($node, $node->file_listing['.']['full-path'] . "/" . $file_name);
+  //
+  debug($node->file_listing['.']['full-path']);
+  //
+  debug($target);
   return $target;
 }
 

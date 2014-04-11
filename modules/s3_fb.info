@@ -3,4 +3,5 @@ description = Enable this module to be able to use Amazon S3 storage with your f
 package = FileBrowser
 core = 7.x
 version = 7.x-1.x
+dependencies[] = filebrowser
 dependencies[] = awssdk2
