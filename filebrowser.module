@@ -885,7 +885,6 @@ function filebrowser_filebrowser_action_process($node, $action, $fids) {
   switch ($action) {
     case 'download' :
       $root_fid = $node->file_listing['.']['fid'];
-      debug($root_fid);
       if (count($fids) > 0) {
         $root_fid .= ":" . implode(',', $fids);
       }

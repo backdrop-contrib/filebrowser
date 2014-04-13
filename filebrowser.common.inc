@@ -40,7 +40,7 @@ define('FILEBROWSER_DOWNLOAD', 'download files');
 define('FILEBROWSER_DELETE_FILE', 'delete files');
 
 /**
- * Column indentifiers definition.
+ * Column identifiers definition.
  */
 define('FILEBROWSER_DATA_NAME_ICON', 'icon');
 define('FILEBROWSER_DATA_NAME_DISPLAY_NAME', 'display-name');
@@ -257,7 +257,6 @@ function _filebrowser_node_content_load($fid) {
  * @return mixed
  */
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
-  debugPrintCallingFunction ();
   global $user, $base_url;
 
   // if this is an s3 directory create a s3 client and AwsStreamWrapper
@@ -289,6 +288,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $relative_path = '/';
   }
   $is_subdir = $relative_path != '/';
+  debug($is_subdir, '$is_subdir');
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
   if ($is_subdir && !_filebrowser_can_explore_subfolders($node)) {
@@ -349,7 +349,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   else {
     $fs_root = realpath($fs_root . "/" . _filebrowser_encoding_to_fs($node, $relative_path)) . "/";
    // debug($fs_root, 'Line 350 - after realpath + _fb_encoding to fs');
-   echo($fs_root . ' || Line 350 - after realpath + _fb_encoding to fs <br>');
+   // echo($fs_root . ' || Line 350 - after realpath + _fb_encoding to fs <br>');
   }
 
   // Load meta-data
@@ -399,13 +399,17 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         $file_relative_path = $relative_path;
       }
       elseif ($filename == '..') {
+
         $file_relative_path = _filebrowser_safe_dirname($relative_path);
+        //debug ($relative_path, 'relative path for ..');
+        //debug ($file_relative_path, 'file relative path for ..');
           $content = (array)db_query("
             SELECT *
             FROM {node_dir_listing_content}
             WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => $file_relative_path))-> fetch();
         if ($content) {
           $db_content[$file_relative_path] = &$content;
+          debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
         }
       }
       else {
@@ -432,7 +436,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
           'full-path' => rtrim($fs_root, '/') . "/" . $fs_filename,
           'status' => MARK_READ
       );
-      debug($files[$filename]['full-path'], ' full path voor ' . $filename);
+      //  debug($files[$filename]['full-path'], ' full path voor ' . $filename);
       $result = module_invoke_all('filebrowser_metadata_get', $files[$filename]);
       if ($result && is_array($result)) {
         $files[$filename] = array_merge($files[$filename], $result);
@@ -467,6 +471,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         if ($parent_folder != "/") {
           $file_path['path'] = $parent_folder;
         }
+        // echo('fs_filename = ' . $fs_filename . '  |  parent folder = ' . $parent_folder) . '  | file_path[path] = ' .  $file_path['path'] .  "<br>";
       }
       else {
         $file_path['path'] = $relative_path . $fs_filename;
@@ -480,29 +485,39 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $files['.']['folders_count'] = $folder_count;
     $files['.']['relative-path'] = $relative_path;
 
-    // FIXME: this is hackish.
     // Amazon S3 filesystem does not provide . and .. files. Therefore we will create them manually
     // to maintain same operation as regular FileBrowser FS.
+    // FIXME: this is hackish. Is het nodig om de . files te zetten?? probeer zonder..
     // FIXME: some properties should be set by function filebrowser_filebrowser_metadata_get()
     if ($is_s3) {
+      // changes to the File System Array
       $files['.']['nid'] = $node-> nid;
       $files['.']['display-name'] = '.';
-      $files['.']['relative-path'] = '/';
-      $files['.']['full-path'] = $fs_root;
+      $files['.']['full-path'] = $fs_root;  // evt eindigen met /.
       $files['.']['status'] = MARK_READ;
       $files['.']['kind'] = 1;
-      // fixme: only if this is a directory
-      if (!isset($db_content['/'])) {
-        $db_content['/'] = array(
-          'nid' => $node->nid,
-          'root' => '/',
-          'path' => '/',
-        );
+      $files['.']['mime-type'] = 'folder';
+      if ($is_subdir) {
+        $files['..']['nid'] = $node-> nid;
+        $files['..']['display-name'] = '..';
+        $files['..']['relative-path'] = '/';
+        $files['..']['full-path'] = $fs_root;  // check training /..
+        $files['..']['status'] = MARK_READ;
+        $files['..']['kind'] = 2;
+        $files['..']['mime-type'] = 'folder/parent';
+        // fixme: only if this is a directory
+        // Changes to the DB content array
+        if (!isset($db_content['/'])) {
+          $db_content['/'] = array(
+            'nid' => $node->nid,
+            'root' => '/',
+            'path' => '/',
+          );
+          $db_content['/']['exists'] = TRUE;
+          $db_content['/']['display-name'] = '.';
+        }
       }
-      $db_content['/']['exists'] = TRUE;
-      $db_content['/']['display-name'] = '.';
     }
-
     closedir($handler);
   }
 
@@ -714,10 +729,8 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
   _filebrowser_load_files($node);
 
   $target = _filebrowser_encoding_to_fs($node, $node->file_listing['.']['full-path'] . "/" . $file_name);
-  //
-  debug($node->file_listing['.']['full-path']);
-  //
-  debug($target);
+  // debug($node->file_listing['.']['full-path']);
+  // debug($target);
   return $target;
 }
 
