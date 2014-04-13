@@ -260,13 +260,15 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   global $user, $base_url;
 
   // if this is an s3 directory create a s3 client and AwsStreamWrapper
-  if ((is_s3_dir($node-> folder_path)) && (module_exists('s3_fb'))) {
-    $client = awssdk_get_client('s3');
-    $client-> registerStreamWrapper();
-    $is_s3 = true;
-  }
-  else {
-    $is_s3 = false;
+  if (module_exists('s3_fb')) {
+    if (is_s3_dir($node-> folder_path)) {
+      $client = awssdk_get_client('s3');
+      $client-> registerStreamWrapper();
+      $is_s3 = true;
+    }
+    else {
+      $is_s3 = false;
+    }
   }
 
   // folder path are node/NID/FID?QUERY
@@ -288,7 +290,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     $relative_path = '/';
   }
   $is_subdir = $relative_path != '/';
-  debug($is_subdir, '$is_subdir');
+  //debug($is_subdir, '$is_subdir');
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
   if ($is_subdir && !_filebrowser_can_explore_subfolders($node)) {
@@ -409,7 +411,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
             WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => $file_relative_path))-> fetch();
         if ($content) {
           $db_content[$file_relative_path] = &$content;
-          debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
+          //debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
         }
       }
       else {
@@ -490,6 +492,20 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     // FIXME: this is hackish. Is het nodig om de . files te zetten?? probeer zonder..
     // FIXME: some properties should be set by function filebrowser_filebrowser_metadata_get()
     if ($is_s3) {
+      // fixme: only if this is a directory
+      // Changes to the DB content array
+      if (!isset($db_content['/'])) {
+        $db_content['/'] = array(
+          'nid' => $node->nid,
+          'root' => '/',
+          'path' => '/',
+          '' => TRUE,
+          'display-name' => '.',
+        );
+      }
+      $db_content['/']['exists'] = true;
+      $db_content['/']['display-name'] = '.';
+
       // changes to the File System Array
       $files['.']['nid'] = $node-> nid;
       $files['.']['display-name'] = '.';
@@ -505,17 +521,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         $files['..']['status'] = MARK_READ;
         $files['..']['kind'] = 2;
         $files['..']['mime-type'] = 'folder/parent';
-        // fixme: only if this is a directory
-        // Changes to the DB content array
-        if (!isset($db_content['/'])) {
-          $db_content['/'] = array(
-            'nid' => $node->nid,
-            'root' => '/',
-            'path' => '/',
-          );
-          $db_content['/']['exists'] = TRUE;
-          $db_content['/']['display-name'] = '.';
-        }
+
+
       }
     }
     closedir($handler);
@@ -527,9 +534,10 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // mess in URLS.
   $to_delete = array();
 
-  // debug($db_content, 'DB content prior to saving to the DB');
-  // debug($files, 'filesystem content prior to saving to the DB');
+  debug($db_content, 'DB content prior to saving to the DB');
+  debug($files, 'filesystem content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
+    debug($record, 'Path');
     if (!isset($record['exists'])) {
       $to_delete[] = $record['fid'];
     }
@@ -736,15 +744,14 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
 
 // JSJ DEBUG HELPER -  REMOVE
 function debugPrintCallingFunction () {
-    static $i;
-    $file = 'n/a';
-    $func = 'n/a';
-    $line = 'n/a';
-    $debugTrace = debug_backtrace();
-    if (isset($debugTrace[1])) {
-        $file = $debugTrace[1]['file'] ? $debugTrace[1]['file'] : 'n/a';
-        $line = $debugTrace[1]['line'] ? $debugTrace[1]['line'] : 'n/a';
-    }
+  $file = 'n/a';
+  $func = 'n/a';
+  $line = 'n/a';
+  $debugTrace = debug_backtrace();
+  if (isset($debugTrace[1])) {
+    $file = $debugTrace[1]['file'] ? $debugTrace[1]['file'] : 'n/a';
+    $line = $debugTrace[1]['line'] ? $debugTrace[1]['line'] : 'n/a';
+  }
     if (isset($debugTrace[2])) $func = $debugTrace[2]['function'] ? $debugTrace[2]['function'] : 'n/a';
     echo "<pre>\n$file, $func, $line\n</pre>";
 }

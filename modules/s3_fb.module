@@ -8,14 +8,40 @@
 function is_s3_dir(&$dir) {
   $dir_prefix = substr($dir, 0, 5);
   if ($dir_prefix == 's3://') {
-   /* $end_slash = substr($dir, -1,1);
-    if ($end_slash != "/") {
-      $dir .= '/';
-    }*/
     return true;
   }
   else {
+
     return false;
+  }
+}
+
+function s3_validate_object($path) {
+  $client = awssdk_get_client('s3');
+  $client->registerStreamWrapper();
+
+  if (!file_exists($path)) {
+    //folder (object) does not exist so we wil create it
+    $success = mkdir($path, 0777, TRUE);
+    if (!$success) {
+      form_set_error('file_path', t('The S3 directory %dir is not a valid directory and I\'m unable to help this.', array(
+      '%dir' => $path
+      )));
+    }
+    else {
+      drupal_set_message(t('The directory %dir has been created on S3.', array(
+        '%dir' => $path
+      )));
+    }
+  }
+  else {
+    //Todo: check readability of S3 dir
+
+    /*if (!is_readable($encoded_path)) {
+      form_set_error('file_path', t('The directory %dir is not readable.', array(
+      '%dir' => $path
+      )));
+    }*/
   }
 }
 

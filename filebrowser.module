@@ -298,31 +298,49 @@ function filebrowser_validate(& $node) {
   $node->folder_presentation = (object)$node->folder_presentation;
   $path = _filebrowser_get_node_root($node);                  // get the folder path
   $encoded_path = _filebrowser_encoding_to_fs($node, $path);
-  // check if this is an amazon s3 path
-  if (module_exists('s3_fb') && (is_s3_dir($encoded_path))) {
-    // further validation and handling by s3_fb module
-      s3_filebrowser_validate($encoded_path);
+
+  // check if this is an amazon s3 path, if so create a client and register AWS StreamWrapper
+  if (module_exists('s3_fb')) {
+    if (is_s3_dir($encoded_path)) {
+      // Todo: move this code to s3_fb
+      $client = awssdk_get_client('s3');
+      $client->registerStreamWrapper();
+
+      if (!file_exists($path)) {
+        //folder (object) does not exist so we wil create it
+        $success = mkdir($path, 0777, TRUE);
+        if (!$success) {
+          form_set_error('file_path', t('The S3 directory %dir is not a valid directory and I\'m unable to help this.', array(
+          '%dir' => $path
+          )));
+        }
+        else {
+          drupal_set_message(t('The directory %dir has been created on S3.', array(
+          '%dir' => $path
+          )));
+        }
+      }
+      return;
+    }
   }
-  else {
-    if (!is_dir($encoded_path)) {
-      $success = mkdir($encoded_path, 0777, TRUE);
-      if (!$success) {
-        form_set_error('file_path', t('The directory %dir is not a valid directory and I\'m unable to help this.', array(
-          '%dir' => $path
+  if (!is_dir($encoded_path)) {
+    $success = mkdir($encoded_path, 0777, TRUE);
+    if (!$success) {
+      form_set_error('file_path', t('The directory %dir is not a valid directory and I\'m unable to help this.', array(
+        '%dir' => $path
          )));
-      }
-      else {
-        drupal_set_message(t('The directory %dir has been created.', array(
-          '%dir' => $path
-         )));
-      }
     }
     else {
-      if (!is_readable($encoded_path)) {
-        form_set_error('file_path', t('The directory %dir is not readable.', array(
-            '%dir' => $path
+      drupal_set_message(t('The directory %dir has been created.', array(
+        '%dir' => $path
         )));
-      }
+    }
+  }
+  else {
+    if (!is_readable($encoded_path)) {
+      form_set_error('file_path', t('The directory %dir is not readable.', array(
+        '%dir' => $path
+        )));
     }
   }
 }
@@ -508,8 +526,9 @@ function filebrowser_view($node, $view_mode) {
  * Implements hook_node_view().
  */
 function filebrowser_node_view($node, $view_mode) {
-  //  debug($node-> file_listing);
+  //debugPrintCallingFunction();
   if ($node->type == 'dir_listing' && $view_mode == 'full') {
+//  debug($node-> file_listing, 'node-> file_listing');
     $links = array();
     if (_filebrowser_metadata_access($node->file_listing['.']['fid'])) {
       $links['file_browser_metadata'] = array(
