@@ -256,6 +256,7 @@ function _filebrowser_node_content_load($fid) {
  * @param bool $rebuild
  * @return mixed
  */
+//todo: change all - in var names to _
 function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   global $user, $base_url;
 
@@ -410,9 +411,10 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
             SELECT *
             FROM {node_dir_listing_content}
             WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => $file_relative_path))-> fetch();
+        //echo ('nid : ' . $node-> nid . ' path: ' . $file_relative_path);
         if ($content) {
           $db_content[$file_relative_path] = &$content;
-          //debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
+          debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
         }
       }
       else {
@@ -493,28 +495,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     // FIXME: this is hackish. Is het nodig om de . files te zetten?? probeer zonder..
     // FIXME: some properties should be set by function filebrowser_filebrowser_metadata_get()
     if ($is_s3) {
-      // fixme: only if this is a directory
-      // Changes to the DB content array
-      if (!isset($db_content['/'])) {
-        $db_content['/'] = array(
-          'nid' => $node->nid,
-          'root' => '/',
-          'path' => '/',
-          'exists' => true,
-          'display-name' => '.',
-        );
-      }
-      $db_content['/']['exists'] = true;
-      $db_content['/']['display-name'] = '.';
-
-      // changes to the File System Array
-      $files['.']['nid'] = $node-> nid;
-      $files['.']['display-name'] = '.';
-      $files['.']['full-path'] = $fs_root;  // evt eindigen met /.
-      $files['.']['status'] = MARK_READ;
-      $files['.']['kind'] = 1;
-      $files['.']['mime-type'] = 'folder';
       if ($is_subdir) {
+        // Create the .. file data
         $files['..']['nid'] = $node-> nid;
         $files['..']['display-name'] = '..';
         $files['..']['relative-path'] = '/';
@@ -524,15 +506,58 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         $files['..']['mime-type'] = 'folder/parent';
         $files['..']['url'] = url('node/' . $node-> nid, array('absolute' => TRUE));
         debug($relative_path);
+        // Set DB content for Up-directory. In this case the '/' folder
+        $files['.']['nid'] = $node-> nid;
+        $files['.']['display-name'] = '.';
+        $files['.']['full-path'] = $fs_root;  // evt eindigen met /.
+        $files['.']['status'] = MARK_READ;
+        $files['.']['kind'] = 1;
+        $files['.']['mime-type'] = 'folder';
+        
         $content = (array)db_query("
-            SELECT * FROM {node_dir_listing_content}
-            WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => $relative_path))-> fetch();
+          SELECT * FROM {node_dir_listing_content}
+          WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => '/'))-> fetch();
         if ($content) {
-          $db_content[$relative_path] = &$content;
+          $db_content['/'] = &$content;
         }
+        else {
+          // set an error. This is an sub directory, so the 'up directory' must already exist in the DB
+          drupal_set_message(t('Parent directory reference error.'), 'error');
+        }
+        $db_content['/']['exists'] = true;
+        $db_content['/']['display-name'] = '..';
 
+        //set DB record for current directory (. file)
+        if (!isset($db_content[$relative_path] )) {
+          $db_content[$relative_path] = array(
+            'exists' => TRUE,
+            'nid' => $node->nid,
+            'root' => $relative_path,
+            'path' => $relative_path,
+            );
+        }
+        $db_content[$relative_path]['exists'] = true;
+        $db_content[$relative_path]['display-name'] = '.';
+      }
+      else {
+        // not a sub dir so we only set the . file and / DB data
+        if (!isset($db_content['/'])) {
+          $db_content['/'] = array(
+            'nid' => $node->nid,
+            'root' => '/',
+            'path' => '/',
+          );
+        }
+        $db_content['/']['exists'] = true;
+        $db_content['/']['display-name'] = '.';
 
-
+        // changes to the File System Array
+        $files['.']['nid'] = $node-> nid;
+        $files['.']['display-name'] = '.';
+        $files['.']['full-path'] = $fs_root;  // evt eindigen met /.
+        $files['.']['status'] = MARK_READ;
+        $files['.']['kind'] = 1;
+        $files['.']['mime-type'] = 'folder';
       }
     }
     closedir($handler);
