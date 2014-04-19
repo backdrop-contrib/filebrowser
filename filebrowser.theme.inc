@@ -265,9 +265,11 @@ function theme_dir_listing_list_view($node) {
     //$rows = array_merge($just_folders, $just_files);
     $rows = array();
     foreach ($just_folders as $data) {
+      //debug($data, 'folders');
       $rows[$data['fid']] = $unsorted_rows[$data['display-name']];
     }
     foreach ($just_files as $data) {
+      //debug($data, 'files');
       $rows[$data['fid']] = $unsorted_rows[$data['display-name']];
     }
     $output = theme('table', array('header' => $header, 'rows' => $rows));
@@ -280,7 +282,7 @@ function theme_dir_listing_list_view($node) {
 }
 
 // FIXME: Rendering the thumbnail gives error
-// Temp sollution by using the already rendered img $form['thumbnail']['#value']
+// Temp solution by using the already rendered img $form['thumbnail']['#value']
 function theme_dir_listing_metadata_group($array_form) {
   $form = $array_form[''];
   //$thumbnail = drupal_render($form['thumbnail']);
