@@ -492,42 +492,20 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
 
     // Amazon S3 filesystem does not provide . and .. files. Therefore we will create them manually
     // to maintain same operation as regular FileBrowser FS.
-    // FIXME: this is hackish. Is het nodig om de . files te zetten?? probeer zonder..
     // FIXME: some properties should be set by function filebrowser_filebrowser_metadata_get()
     if ($is_s3) {
       if ($is_subdir) {
         // Create the .. file data
-        $files['..']['nid'] = $node-> nid;
-        $files['..']['display-name'] = '..';
-        $files['..']['relative-path'] = '/';
-        $files['..']['full-path'] = $fs_root;  // check training /..
-        $files['..']['status'] = MARK_READ;
-        $files['..']['kind'] = 2;
-        $files['..']['mime-type'] = 'folder/parent';
-        $files['..']['url'] = url('node/' . $node-> nid, array('absolute' => TRUE));
-        debug($relative_path);
-        // Set DB content for Up-directory. In this case the '/' folder
-        $files['.']['nid'] = $node-> nid;
-        $files['.']['display-name'] = '.';
-        $files['.']['full-path'] = $fs_root;  // evt eindigen met /.
-        $files['.']['status'] = MARK_READ;
-        $files['.']['kind'] = 1;
-        $files['.']['mime-type'] = 'folder';
+        $files['..'] = s3_create_subdir($node-> nid, $fs_root);
 
-        $content = (array)db_query("
-          SELECT * FROM {node_dir_listing_content}
-          WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => '/'))-> fetch();
-        if ($content) {
-          $db_content['/'] = &$content;
-        }
-        else {
-          // set an error. This is an sub directory, so the 'up directory' must already exist in the DB
-          drupal_set_message(t('Parent directory reference error.'), 'error');
-        }
-        $db_content['/']['exists'] = true;
-        $db_content['/']['display-name'] = '..';
+        // Create the . file data
+        s3_create_updir($files['.'], $node-> nid, $fs_root);
+
+        // Set DB content for Up-directory. In this case the '/' folder
+        $db_content['/'] = s3_set_db_content_updir($node-> nid);
 
         //set DB record for current directory (. file)
+        // todo: move to s3_fb module
         if (!isset($db_content[$relative_path] )) {
           $db_content[$relative_path] = array(
             'exists' => TRUE,

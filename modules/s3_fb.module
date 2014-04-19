@@ -56,3 +56,51 @@ function s3_fb_form_dir_listing_node_form_alter(&$form, &$form_state, $form_id) 
   $form['folder_path']['#description'] .= '<br>' . t('S3 Filebrowser module installed. To use Amazon S3 storage enter the full path to your storage location (S3://your_bucket/directory)');
   $form['folder_rights']['download_archive']['#description'] .= '<br>' . t('S3 Filebrowser module installed.') . '<br><strong>' . t('Folder download is not supported yet by S3 Filebrowser. Please deselect this option.');
 }
+
+/**
+ * @function Creates a .. file since this is not available in a s3 system.
+ * @param $nid integer Node id for which this FileBrowser is created
+ * @param $fs_root string The root for this directory
+ * @return array
+ */
+function s3_create_subdir($nid, $fs_root){
+  return array(
+    'nid' => $nid,
+    'display-name' => '..',
+    'relative-path' => '/',
+    'full-path'  => $fs_root,
+    'status' => MARK_READ,
+    'kind' => 2,
+    'mime-type' => 'folder/parent',
+    'url' => url('node/' . $nid, array('absolute' => TRUE)),
+  );
+}
+
+/**
+ * @function Creates a . file (parent folder) since this is not available in a s3 system.
+ * @param $nid
+ * @param $fs_root
+ * @return array
+ */
+function s3_create_updir(&$file_array, $nid, $fs_root) {
+  $file_array['nid'] = $nid;
+  $file_array['display-name'] = '.';
+  $file_array['full-path'] = $fs_root;
+  $file_array['status'] = MARK_READ;
+  $file_array['kind'] = 1;
+  $file_array['mime-type'] = 'folder';
+}
+
+function s3_set_db_content_updir($nid){
+  $content = (array)db_query("SELECT * FROM {node_dir_listing_content} WHERE nid = :nid and path = :path",  array(':nid' => $nid, ':path' => '/'))-> fetch();
+  if ($content) {
+    $content_arr = &$content;
+  }
+  else {
+    // set an error. This is an sub directory, so the 'up directory' should already exist in the DB
+    drupal_set_message(t('Parent directory reference error.'), 'error');
+  }
+  $content_arr['exists'] = true;
+  $content_arr['display-name'] = '..';
+  return $content_arr;
+}
