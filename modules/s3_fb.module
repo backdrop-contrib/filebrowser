@@ -11,12 +11,11 @@ function is_s3_dir(&$dir) {
     return true;
   }
   else {
-
     return false;
   }
 }
 
-function s3_validate_object($path) {
+function validate_s3($path) {
   $client = awssdk_get_client('s3');
   $client->registerStreamWrapper();
 
@@ -36,6 +35,7 @@ function s3_validate_object($path) {
   }
   else {
     //Todo: check readability of S3 dir
+    // php function is_readable() is avail in Amazon streamWrapper
 
     /*if (!is_readable($encoded_path)) {
       form_set_error('file_path', t('The directory %dir is not readable.', array(

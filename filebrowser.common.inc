@@ -331,7 +331,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   foreach ($query as $data) {
     $db_content[$data->path] = (array)$data;
   }
-  debug($db_content, 'loaded from DB');
+  //debug($db_content, 'loaded from DB');
 
   // Build full path
   $fs_root = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node));
@@ -513,7 +513,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         $files['.']['status'] = MARK_READ;
         $files['.']['kind'] = 1;
         $files['.']['mime-type'] = 'folder';
-        
+
         $content = (array)db_query("
           SELECT * FROM {node_dir_listing_content}
           WHERE nid = :nid and path = :path", array(':nid' => $node-> nid, ':path' => '/'))-> fetch();
@@ -569,8 +569,8 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // mess in URLS.
   $to_delete = array();
 
-  debug($db_content, 'DB content prior to saving to the DB');
-  debug($files, 'filesystem content prior to saving to the DB');
+  //debug($db_content, 'DB content prior to saving to the DB');
+  //debug($files, 'filesystem content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
     //debug($record, 'Path');
     if (!isset($record['exists'])) {
