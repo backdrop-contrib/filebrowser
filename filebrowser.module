@@ -300,13 +300,12 @@ function filebrowser_validate(& $node) {
   $path = _filebrowser_get_node_root($node);                  // get the folder path
   $encoded_path = _filebrowser_encoding_to_fs($node, $path);
 
-  // check if this is an amazon s3 path, if so create a client and register AWS StreamWrapper
-  if (module_exists('s3_fb')) {
-    if (is_s3_dir($encoded_path)) {
-      validate_s3($encoded_path);
-      return;
-    }
+  // check if this is an amazon s3 path, if so validate it via the s3_fb module
+  if (is_s3_filesystem($encoded_path)) {
+    validate_s3($encoded_path);
+    return;
   }
+
   if (!is_dir($encoded_path)) {
     $success = mkdir($encoded_path, 0777, TRUE);
     if (!$success) {
@@ -694,7 +693,7 @@ function filebrowser_form_create_folder_validate($form, $form_state) {
 }
 
 /**
- * create folder submition.
+ * create folder submission.
  */
 function filebrowser_form_create_folder_submit($form, & $form_state) {
   $i = 1; // Later we can have multi-upload
@@ -801,6 +800,10 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
     $content = _filebrowser_node_content_load($fid);
     $node = node_load($content['nid']);
     $target = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['path']);
+    if (is_s3_filesystem($target)) {
+      $client = awssdk_get_client('s3');
+      $client-> registerStreamWrapper();
+    }
     if (is_file($target)) {
       $result = unlink($target);
       if (!$result) {
@@ -818,7 +821,6 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
       }
     }
   }
-
  // $form_state['redirect'] = isset($_GET['destination']) ? $_GET['destination'] : '<front>';
 }
 
@@ -1114,4 +1116,18 @@ function filebrowser_node_mass_update_thumbnails($nodes) {
  */
 // CHECK IF there are more links from D6 JSJ FIXME
 function _filebrowser_links($node) {
+}
+
+/**
+ * Check if a file is on a S3 filesystem
+ * @param $target
+ * @return bool true if it is a S3 filesystem, false otherwise
+ */
+function is_s3_filesystem($target) {
+  if (module_exists('s3_fb')) {
+    if (is_s3_dir($target)) {
+      return true;
+    }
+  }
+  return false;
 }
