@@ -261,15 +261,13 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   global $user, $base_url;
 
   // if this is an s3 directory create a s3 client and AwsStreamWrapper
-  if (module_exists('s3_fb')) {
-    if (is_s3_dir($node-> folder_path)) {
-      $client = awssdk_get_client('s3');
-      $client-> registerStreamWrapper();
-      $is_s3 = true;
-    }
-    else {
-      $is_s3 = false;
-    }
+  if (is_s3_filesystem($node-> folder_path)) {
+    $client = awssdk_get_client('s3');
+    $client-> registerStreamWrapper();
+    $is_s3 = true;
+  }
+  else {
+    $is_s3 = false;
   }
 
   // folder path are node/NID/FID?QUERY

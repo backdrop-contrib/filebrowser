@@ -920,12 +920,6 @@ function filebrowser_filebrowser_download_manager_info() {
  * hook_filebrowser_download_manager_process implementation.
  */
 function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL) {
-  debug($file, 'file');
-  debug($filename, 'filename');
-/*  if (module_exists('s3_fb')) {
-    $client = awssdk_get_client('s3');
-    $client-> registerStreamWrapper();
-  }*/
   switch ($delta) {
     case 'public' :
       $web_root = getcwd();
