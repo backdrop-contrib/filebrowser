@@ -51,9 +51,9 @@ function filebrowser_permission() {
       'title' => t('Delete any directory listing')),
     FILEBROWSER_EDIT_OWN_DIRECTORY_LISTINGS => array(
       'title' => t('Edit own directory listings')),
-    FILEBROWSER_EDIT_ANY_DIRECORY_LISTINGS => array(
+    FILEBROWSER_EDIT_ANY_DIRECTORY_LISTINGS => array(
       'title' => t('Edit any directory listing')),
-    FILEBROWSER_VIEW_DIRECORY_LISTINGS => array(
+    FILEBROWSER_VIEW_DIRECTORY_LISTINGS => array(
       'title' => t('View directory listings')),
     FILEBROWSER_UPLOAD => array(
       'title' => t('Upload files')),
@@ -333,7 +333,7 @@ function filebrowser_validate(& $node) {
  */
 function filebrowser_db_rewrite_sql($query, $primary_table, $primary_field, $args) {
   global $user;
-  if ($primary_table == 'n' && $primary_field == 'nid' && !user_access(FILEBROWSER_VIEW_DIRECORY_LISTINGS, $user)) {
+  if ($primary_table == 'n' && $primary_field == 'nid' && !user_access(FILEBROWSER_VIEW_DIRECTORY_LISTINGS, $user)) {
     $return = array(
         'where' => "n.type != 'dir_listing'"
     );
@@ -829,7 +829,7 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
  */
 function filebrowser_node_access($node, $op, $account) {
   if ($op == 'view') {
-    if (!user_access(FILEBROWSER_VIEW_DIRECORY_LISTINGS, $account)) {
+    if (!user_access(FILEBROWSER_VIEW_DIRECTORY_LISTINGS, $account)) {
       return FALSE;
     }
   }
@@ -841,7 +841,7 @@ function filebrowser_node_access($node, $op, $account) {
   }
 
   if ($op == 'update') {
-    if (!user_access(FILEBROWSER_EDIT_ANY_DIRECORY_LISTINGS, $account) || !(user_access(FILEBROWSER_EDIT_OWN_DIRECTORY_LISTINGS, $account) && ($account->uid == $node->uid))) {
+    if (!user_access(FILEBROWSER_EDIT_ANY_DIRECTORY_LISTINGS, $account) || !(user_access(FILEBROWSER_EDIT_OWN_DIRECTORY_LISTINGS, $account) && ($account->uid == $node->uid))) {
       return FALSE;
     }
   }
