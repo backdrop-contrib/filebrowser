@@ -104,7 +104,7 @@ function s3_delete($target) {
       break;
     case "dir":
       // todo: s3 will not delete an non-empty folder. But wil fail silently.
-      // todo: check why we need an and slash
+      // todo: check why we need an end slash
       $result = $client-> deleteObject(s3_object_info($target . '/'));
       if (!$result) {
         drupal_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
@@ -141,13 +141,13 @@ function s3_object_info($path){
  * @return null|string
  */
 function s3_create_archive($target, $node, $fid, $files_fid) {
-  debug($target, 'target');
+  //debug($target, 'target');
   $client = awssdk_get_client('s3');
   $client-> registerStreamWrapper();
 
   $zip = new ZipArchive();
   $target = file_directory_temp() . "/filebrowser_" . _filebrowser_safe_basename($target) . ".zip";
-  debug($target, 'target');
+  //debug($target, 'target');
   $cleanup = $target;
   if (!file_exists(_filebrowser_safe_dirname($target))) {
     mkdir(_filebrowser_safe_dirname($target), 0777, TRUE);
@@ -157,11 +157,10 @@ function s3_create_archive($target, $node, $fid, $files_fid) {
   }
   _filebrowser_load_files($node, $fid);
   if ($zip->open($target, ZIPARCHIVE::CREATE) === TRUE) {
-    debug($target, 'The zip file');
+    //debug($target, 'The zip file');
     foreach ($node->file_listing as $file_name => $file_data) {
       if (($file_data['kind'] === 0) && (!$files_fid || in_array($file_data['fid'], $files_fid))) {
         $fs_filename = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file_data['relative-path']);
-        debug($fs_filename, 'fs_filename after realpath');
 
         try {
           $result = $client-> getObject(s3_object_info($fs_filename));
@@ -170,6 +169,7 @@ function s3_create_archive($target, $node, $fid, $files_fid) {
           $content = $body-> read($result['ContentLength']);
         }
         catch(Aws\S3\Exception\S3Exception $e) {
+          // todo: wrap in drupal message
           echo "Request failed.<br />";
         }
         $zip-> addFromString($file_name, $content);

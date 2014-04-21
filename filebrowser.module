@@ -440,7 +440,7 @@ function filebrowser_view($node, $view_mode) {
     );
     $breadcrumb_path = "";
     //print_r($node);
-  //return;
+    //return;
     $path_elements = explode('/', rtrim($node->file_listing['.']['relative-path'], "/"));
     for ($i = 0; $i < count($path_elements); $i++) {
       $child_dir = $path_elements[$i] == '' ? '/' : $path_elements[$i];

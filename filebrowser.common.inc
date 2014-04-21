@@ -232,11 +232,6 @@ function _filebrowser_node_content_delete($node) {
  * @return content record
  */
 function _filebrowser_node_content_load($fid) {
-/* Was for debugging - please leave it in for the time
-  if (is_array($fid)) {
-    debugPrintCallingFunction();
-    exit;
-  }*/
   static $contents = array();
   if (isset($contents[$fid])) {
     return $contents[$fid];
@@ -403,8 +398,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
       elseif ($filename == '..') {
 
         $file_relative_path = _filebrowser_safe_dirname($relative_path);
-        //debug ($relative_path, 'relative path for ..');
-        //debug ($file_relative_path, 'file relative path for ..');
           $content = (array)db_query("
             SELECT *
             FROM {node_dir_listing_content}
@@ -438,7 +431,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
           'full-path' => rtrim($fs_root, '/') . "/" . $fs_filename,
           'status' => MARK_READ
       );
-      //  debug($files[$filename]['full-path'], ' full path voor ' . $filename);
       $result = module_invoke_all('filebrowser_metadata_get', $files[$filename]);
       if ($result && is_array($result)) {
         $files[$filename] = array_merge($files[$filename], $result);
@@ -544,8 +536,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   // mess in URLS.
   $to_delete = array();
 
-  //debug($db_content, 'DB content prior to saving to the DB');
-  //debug($files, 'filesystem content prior to saving to the DB');
   foreach ($db_content as $path => &$record) {
     //debug($record, 'Path');
     if (!isset($record['exists'])) {
@@ -747,8 +737,6 @@ function _filebrowser_build_new_upload_file_name($node, $form_state, $i) {
   _filebrowser_load_files($node);
 
   $target = _filebrowser_encoding_to_fs($node, $node->file_listing['.']['full-path'] . "/" . $file_name);
-  // debug($node->file_listing['.']['full-path']);
-  // debug($target);
   return $target;
 }
 

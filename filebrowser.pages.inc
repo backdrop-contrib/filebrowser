@@ -49,8 +49,7 @@ function filebrowser_page_download($fid) {
     $target = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['path']);
   }
   if (!$content || !$node || !_filebrowser_can_download_file($node) || !$target) {
-    //debug($content); debug($node);
-    //debug($target);
+    //debug($content); debug($node); //debug($target);
     drupal_access_denied();
     exit();
   }
@@ -84,13 +83,9 @@ function filebrowser_page_download($fid) {
       }
       _filebrowser_load_files($node, $fid);
       if ($zip->open($target, ZIPARCHIVE::CREATE) === TRUE) {
-        debug($target,'the zip file');
         foreach ($node->file_listing as $file_name => $file_data) {
           if (($file_data['kind'] === 0) && (!$files_fid || in_array($file_data['fid'], $files_fid))) {
             $fs_filename = realpath(_filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . "/" . $file_data['relative-path']));
-
-            debug($fs_filename, 'fs_filename after realpath');
-            //'/var/www/vhosts/yagoserver.com/httpdocs/dev7/drupal/sites/default/files/screencast/screen_demo/testdoc.txt'
             $zip->addFile($fs_filename, $file_name);
           }
         }
