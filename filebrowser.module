@@ -295,7 +295,6 @@ function filebrowser_form(&$node, &$form_state) {
  * Implements hook_validate().
  */
 function filebrowser_validate(& $node) {
-  module_load_include('module','s3_fb');
   $node->folder_presentation = (object)$node->folder_presentation;
   $path = _filebrowser_get_node_root($node);                  // get the folder path
   $encoded_path = _filebrowser_encoding_to_fs($node, $path);
@@ -921,6 +920,12 @@ function filebrowser_filebrowser_download_manager_info() {
  * hook_filebrowser_download_manager_process implementation.
  */
 function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL) {
+  debug($file, 'file');
+  debug($filename, 'filename');
+/*  if (module_exists('s3_fb')) {
+    $client = awssdk_get_client('s3');
+    $client-> registerStreamWrapper();
+  }*/
   switch ($delta) {
     case 'public' :
       $web_root = getcwd();
@@ -950,6 +955,7 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       }
       $block_size = 4096;
       $buffer = '';
+
       $handle = fopen($file, 'rb');
       drupal_set_time_limit(0);
       if ($handle !== FALSE) {
@@ -1131,4 +1137,19 @@ function is_s3_filesystem($target) {
     }
   }
   return false;
+}
+
+/**
+ * Check if a given path is an amazon directory
+ * @param $dir Directory to check.
+ * @return bool TRUE if it is an amazon directory, FALSE if not.
+ */
+function is_s3_dir(&$dir) {
+  $dir_prefix = substr($dir, 0, 5);
+  if ($dir_prefix == 's3://') {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
