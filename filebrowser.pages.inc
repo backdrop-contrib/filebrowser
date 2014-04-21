@@ -56,13 +56,19 @@ function filebrowser_page_download($fid) {
   }
 
   //  debug($target, '$target @ function filebrowser_page_download');
+  if (is_s3_filesystem($target)) {
+    $is_s3 = true;
+    $client = awssdk_get_client('s3');
+    $client-> registerStreamWrapper();
+  }
+
   if (is_dir($target)) {
     if (!function_exists("zip_open")) {
       drupal_set_message(t("No ZIP support found in PHP installation, please contact your administrator"));
       return;
     }
 
-    if (is_s3_filesystem($target)) {
+    if ($is_s3) {
       // Creation of archive handled by s3_fb module
       $target = s3_create_archive($target, $node, $fid, $files_fid);
     }
