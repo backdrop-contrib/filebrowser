@@ -104,3 +104,44 @@ function s3_set_db_content_updir($nid){
   $content_arr['display-name'] = '..';
   return $content_arr;
 }
+
+function s3_delete($target) {
+  $client = awssdk_get_client('s3');
+  $client-> registerStreamWrapper();
+  $type = filetype($target);
+
+  switch ($type) {
+    case "file":
+      $result = unlink($target);
+      if (!$result) {
+        drupal_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
+      }
+      break;
+    case "dir":
+      // todo: s3 will not delete an non-empty folder. But wil fail silently.
+      $result = $client-> deleteObject(s3_object_info($target));
+      if (!$result) {
+        drupal_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
+      }
+      break;
+    default:
+        drupal_set_message(t('Switch case default error in function s3_delete().'), 'error');
+  }
+}
+
+/**
+ *  Takes a path to an S3 object and breakes it down to it's bucket and key
+ * @param string $path Path to breakdown
+ * @return array array with value of bucket and key of object
+ */
+function s3_object_info($path){
+  $bucket_key = str_replace('s3://', '', $path);
+  $arr = explode('/', $bucket_key);
+  $bucket = $arr[0];
+  unset($arr[0]);
+  $key = implode('/', $arr);
+  return  array(
+    'Bucket' => $bucket,
+    'Key'    => $key . '/',
+  );
+}

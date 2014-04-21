@@ -414,7 +414,6 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
         //echo ('nid : ' . $node-> nid . ' path: ' . $file_relative_path);
         if ($content) {
           $db_content[$file_relative_path] = &$content;
-          debug($db_content[$file_relative_path], "$db_content[$file_relative_path]");
         }
       }
       else {

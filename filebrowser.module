@@ -801,23 +801,24 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
     $node = node_load($content['nid']);
     $target = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['path']);
     if (is_s3_filesystem($target)) {
-      $client = awssdk_get_client('s3');
-      $client-> registerStreamWrapper();
-    }
-    if (is_file($target)) {
-      $result = unlink($target);
-      if (!$result) {
-        drupal_set_message(t('Unable to delete @file', array(
-            '@file' => $target
-        )), 'warning');
-      }
+      s3_delete($target);
     }
     else {
-      $result = rmdir($target);
-      if (!$result) {
-        drupal_set_message(t('Unable to prune @file (not empty ?)', array(
-            '@file' => $target
-        )), 'warning');
+      if (is_file($target)) {
+        $result = unlink($target);
+        if (!$result) {
+          drupal_set_message(t('Unable to delete @file', array(
+              '@file' => $target
+          )), 'warning');
+        }
+      }
+      else {
+        $result = rmdir($target);
+        if (!$result) {
+          drupal_set_message(t('Unable to prune @file (not empty ?)', array(
+              '@file' => $target
+          )), 'warning');
+        }
       }
     }
   }
