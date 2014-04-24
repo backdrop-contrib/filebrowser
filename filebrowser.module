@@ -142,6 +142,12 @@ function filebrowser_form(&$node, &$form_state) {
     '#options' => $managers,
     '#weight' => -7
   );
+  $form['folder_rights']['force_download'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Force download"),
+    '#description' => t("If you select this options clicking a file-link will download the file. Leave this option off if you want the file to open in your browser."),
+    '#default_value' => isset($node->folder_rights->force_download) ? $node->folder_rights->force_download :'',
+  );
   $forbidden_files_default = "descript.ion\nfile.bbs\n.git\nCSV\n.svn";
 
   $form['folder_rights']['forbidden_files'] = array(
@@ -919,7 +925,8 @@ function filebrowser_filebrowser_download_manager_info() {
 /**
  * hook_filebrowser_download_manager_process implementation.
  */
-function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL) {
+function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL, $force_download = NULL) {
+  $content_disposition = ($force_download ? 'Content-Disposition: attachment; filename="' : 'Content-Disposition: inline; filename="');
   switch ($delta) {
     case 'public' :
       $web_root = getcwd();
@@ -945,7 +952,7 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
         header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
       }
       else {
-        header('Content-Disposition: inline; filename="' . _filebrowser_safe_basename($filename) . '";');
+        header($content_disposition . _filebrowser_safe_basename($filename) . '";');
       }
       $block_size = 4096;
       $buffer = '';
