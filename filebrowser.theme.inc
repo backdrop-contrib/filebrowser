@@ -89,7 +89,7 @@ function theme_dir_listing_list_view($node) {
   // Record if directory listing is empty or not.
   $directory_empty = TRUE;
 
-  // Avalaible actions
+  // Available actions
   $actions = module_invoke_all('filebrowser_actions_info', $node);
   $has_actions = count($actions) > 0;
 
@@ -117,7 +117,7 @@ function theme_dir_listing_list_view($node) {
     }
     if ($has_actions) {
       // checkboxes are now provided by theme_tableselect
-    $unsorted_rows[$file_name]['fid'] = ($data['mime-type'] != 'folder/parent' ? "{$data['fid']}" : '');
+      $unsorted_rows[$file_name]['fid'] = ($data['mime-type'] != 'folder/parent' ? "{$data['fid']}" : '');
     }
     foreach ($column_names as $column_name => $column_spec) {
       if (isset($node->folder_presentation->visible_columns[$column_name]) && $node->folder_presentation->visible_columns[$column_name]) {
@@ -275,7 +275,8 @@ function theme_dir_listing_list_view($node) {
     $output = theme('table', array('header' => $header, 'rows' => $rows));
     if ($has_actions) {
       // in D7 we don't send the table to the form builder. The table is build by theme_tableselect
-		$output = drupal_render(drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node));
+      $form = drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node);
+		  $output = drupal_render($form);
     }
     return $output;
   } // Directory is not empty
