@@ -928,7 +928,7 @@ function filebrowser_filebrowser_download_manager_info() {
  * hook_filebrowser_download_manager_process implementation.
  */
 function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL, $force_download = NULL) {
-  $content_disposition = ($force_download ? 'Content-Disposition: attachment; filename="' : 'Content-Disposition: inline; filename="');
+  $content_disposition = ($force_download ? 'attachment; filename="' : 'inline; filename="');
   switch ($delta) {
     case 'public' :
       $web_root = getcwd();
@@ -938,23 +938,23 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       else {
         $target = $file;
       }
-      header("Location: " . url(trim($target, '/'), array('absolute' => TRUE)));
-      return TRUE;
+      drupal_add_http_header('Location', url(trim($target, '/'), array('absolute' => TRUE)));
+      drupal_exit();
 
     case 'private' :
-      header('Content-Description: File Transfer');
-      header("Cache-Control: public, must-revalidate, max-age=0"); // HTTP/1.1
-      header("Pragma: public");
-      header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
-      header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
-      header("Content-Type: " . file_get_mimetype($filename));
-      header("Content-Transfer-Encoding: binary");
-      header("Content-Length: " . filesize($file));
+      drupal_add_http_header('Content-Description', 'File Transfer');
+      drupal_add_http_header('Cache-Control', 'public, must-revalidate, max-age=0');
+      drupal_add_http_header('Pragma', 'public');
+      drupal_add_http_header('Expires', 'Sat, 26 Jul 1997 05:00:00 GMT');
+      drupal_add_http_header('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
+      drupal_add_http_header('Content-Type', file_get_mimetype($filename));
+      drupal_add_http_header('Content-Transfer-Encoding', 'binary');
+      drupal_add_http_header('Content-Length', filesize($file));
       if (stristr("MSIE", getenv("HTTP_USER_AGENT")) || stristr("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
-        header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
+        drupal_add_http_header('Content-Disposition', 'inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), 'ISO-8859-2', 'UTF-8') . '";');
       }
       else {
-        header($content_disposition . _filebrowser_safe_basename($filename) . '";');
+        drupal_add_http_header('Content-Disposition', $content_disposition . _filebrowser_safe_basename($filename) . '";');
       }
       $block_size = 4096;
       $buffer = '';
@@ -970,7 +970,7 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
         }
         fclose($handle);
       }
-      return TRUE;
+      drupal_exit();
   }
 }
 
