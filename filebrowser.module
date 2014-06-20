@@ -1090,11 +1090,11 @@ function filebrowser_theme() {
       'file' => 'filebrowser.theme.inc'
     ),
     'dir_listing_statistics' => array(
-      'variables' => array( 'statistics' => NULL),
+      'variables' => array('statistics' => NULL),
       'file' => 'filebrowser.theme.inc'
     ),
     'dir_listing_metadata_group' => array(
-      //'variables' => array('render element' => NULL),
+
       'file' => 'filebrowser.theme.inc'
     )
   );

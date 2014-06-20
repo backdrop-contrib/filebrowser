@@ -291,10 +291,8 @@ function theme_dir_listing_metadata_group($array_form) {
   foreach (element_children($form) as $key) {
     if ($key != 'thumbnail') {
       //$output .= "<tr><td>$thumbnail</td><td>"
-      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>"
-    . drupal_render($form[$key])
-    . "</td></tr>";
-      $thumbnail = '';
+      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>" . drupal_render($form[$key]) . "</td></tr>";
+   //   $thumbnail = '';
     }
   }
   $output .= "</table>";

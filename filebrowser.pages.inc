@@ -128,7 +128,7 @@ function filebrowser_form_metadata($form, &$form_state, $fid) {
           '#tree' => TRUE,
           '#collapsible' => TRUE,
           '#collapsed' => TRUE,
-          '#theme' => 'dir_listing_metadata_group'
+         // '#theme' => 'dir_listing_metadata_group'
       );
 
       $form[$file['fid']]['thumbnail'] = array(
