@@ -723,6 +723,7 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
 }
 
 function filebrowser_form_actions($form, &$form_state, $header, $options, $actions, $node) {
+  debug($header);
   $form = array();
   $form['#node'] = $node;
   $form['table'] = array(
@@ -731,6 +732,14 @@ function filebrowser_form_actions($form, &$form_state, $header, $options, $actio
     '#options' => $options,
     '#multiple' => TRUE,
   );
+  // search $options array to find the "Up Dir" line and de-activate the checkbox
+  foreach ($options as $key => $option) {
+    if (!$option['fid']) {
+      $form['table'][$key]['#disabled'] = true;
+    }
+  }
+
+  //if (isset($form['table'][]))
   // Normally the checkboxes are created by form_process_tableselect(). They are created manually here
   // to have the checkboxes behave the way we want it for filebrowser.
   /*  foreach ($options as $key => $data) {
@@ -867,10 +876,9 @@ function filebrowser_node_access($node, $op, $account) {
  */
 function filebrowser_filebrowser_actions_info($node) {
   $actions = array();
-  if ($node->file_listing['.']['files_count'] > 0) {
+  if ($node->file_listing['.']['files_count'] || $node->file_listing['.']['folders_count'] ) {
     if (_filebrowser_can_download_archive($node) && function_exists('zip_open')) {
       $actions[] = array(
-
           'operation' => 'download',
           'title' => t("Download selected items as an ZIP archive (only files)")
       );
@@ -928,7 +936,7 @@ function filebrowser_filebrowser_download_manager_info() {
  * hook_filebrowser_download_manager_process implementation.
  */
 function filebrowser_filebrowser_download_manager_process($delta = NULL, $file = NULL, $filename = NULL, $force_download = NULL) {
-  $content_disposition = ($force_download ? 'attachment; filename="' : 'inline; filename="');
+  $content_disposition = ($force_download ? 'Content-Disposition: attachment; filename="' : 'Content-Disposition: inline; filename="');
   switch ($delta) {
     case 'public' :
       $web_root = getcwd();
@@ -938,23 +946,23 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       else {
         $target = $file;
       }
-      drupal_add_http_header('Location', url(trim($target, '/'), array('absolute' => TRUE)));
-      drupal_exit();
+      header("Location: " . url(trim($target, '/'), array('absolute' => TRUE)));
+      return TRUE;
 
     case 'private' :
-      drupal_add_http_header('Content-Description', 'File Transfer');
-      drupal_add_http_header('Cache-Control', 'public, must-revalidate, max-age=0');
-      drupal_add_http_header('Pragma', 'public');
-      drupal_add_http_header('Expires', 'Sat, 26 Jul 1997 05:00:00 GMT');
-      drupal_add_http_header('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
-      drupal_add_http_header('Content-Type', file_get_mimetype($filename));
-      drupal_add_http_header('Content-Transfer-Encoding', 'binary');
-      drupal_add_http_header('Content-Length', filesize($file));
+      header('Content-Description: File Transfer');
+      header("Cache-Control: public, must-revalidate, max-age=0"); // HTTP/1.1
+      header("Pragma: public");
+      header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+      header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+      header("Content-Type: " . file_get_mimetype($filename));
+      header("Content-Transfer-Encoding: binary");
+      header("Content-Length: " . filesize($file));
       if (stristr("MSIE", getenv("HTTP_USER_AGENT")) || stristr("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
-        drupal_add_http_header('Content-Disposition', 'inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), 'ISO-8859-2', 'UTF-8') . '";');
+        header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
       }
       else {
-        drupal_add_http_header('Content-Disposition', $content_disposition . _filebrowser_safe_basename($filename) . '";');
+        header($content_disposition . _filebrowser_safe_basename($filename) . '";');
       }
       $block_size = 4096;
       $buffer = '';
@@ -970,7 +978,7 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
         }
         fclose($handle);
       }
-      drupal_exit();
+      return TRUE;
   }
 }
 
