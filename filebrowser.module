@@ -723,7 +723,7 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
 }
 
 function filebrowser_form_actions($form, &$form_state, $header, $options, $actions, $node) {
-  debug($header);
+  // debug($header);
   $form = array();
   $form['#node'] = $node;
   $form['table'] = array(
