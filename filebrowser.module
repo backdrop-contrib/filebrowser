@@ -815,13 +815,22 @@ function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
     $file = _filebrowser_node_content_load($fid);
     $fid = _filebrowser_safe_basename($file['path']);
   }
-  return confirm_form($form, t('Are you sure you want to delete following files ?'), isset($_GET['destination']) ? $_GET['destination'] : 'node/' . $node->nid, "<ul><li>" . implode("</li><li>", $fids) . "</li></ul>" . t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+  return confirm_form(
+    $form,
+    t('Are you sure you want to delete the following items?'),
+    isset($_GET['destination']) ? $_GET['destination'] : 'node/' . $node->nid,
+    '<ul><li>' . implode('</li><li>', $fids) . '</li></ul>'
+    . t('This action cannot be undone.') . '<br /><br />' . t('<b>WARNING</b>: if you selected subfolders, their content will be deleted too.'),
+    t('Delete'),
+    t('Cancel')
+  );
 }
 
 /**
  * File delete confirmation form submit
  */
 function filebrowser_form_delete_confirm_submit($form, &$form_state) {
+
   foreach ($form_state['values']['fids'] as $fid) {
     $content = _filebrowser_node_content_load($fid);
     $node = node_load($content['nid']);
@@ -839,7 +848,7 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
         }
       }
       else {
-        $result = rmdir($target);
+        $result = _filebrowser_rmdir($target);
         if (!$result) {
           drupal_set_message(t('Unable to prune @file (not empty ?)', array(
               '@file' => $target
@@ -1231,6 +1240,37 @@ function filebrowser_node_mass_update_thumbnails($nodes) {
  */
 // CHECK IF there are more links from D6 JSJ FIXME
 function _filebrowser_links($node) {
+}
+
+
+/**
+ * Removes a whole directory tree recursively.
+ *
+ * @param string $dir Directory to remove
+ *
+ * @return boolean TRUE on success, FALSE otherwise.
+ */
+function _filebrowser_rmdir($dir) {
+
+  if (is_dir($dir)) {
+    $children = scandir($dir);
+    foreach ($children as $child) {
+      if ($child != '.' && $child != '..') {
+        $fullname = $dir . '/' . $child;
+        if (is_file($fullname) || is_link($fullname)) {
+          unlink($fullname);
+        }
+        elseif (is_dir($fullname)) {
+          if (!_filebrowser_rmdir($fullname)) {
+            return FALSE;
+          }
+        }
+      }
+    }
+    reset($children);
+    return rmdir($dir);
+  }
+
 }
 
 /**
