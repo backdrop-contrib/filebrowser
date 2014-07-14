@@ -167,6 +167,10 @@ function filebrowser_page_delete($fids) {
   return drupal_get_form('filebrowser_form_delete_confirm', $files_fid);
 }
 
+function filebrowser_page_rename($fids) {
+  $files_fid = explode(',', $fids);
+  return drupal_get_form('filebrowser_form_rename', $files_fid);
+}
 
 function filebrowser_update_thumbnails($fids) {
   if (!is_array($fids)) {

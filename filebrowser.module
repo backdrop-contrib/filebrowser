@@ -61,6 +61,8 @@ function filebrowser_permission() {
       'title' => t('Download archive')),
     FILEBROWSER_DELETE_FILE => array(
       'title' => t('Delete file')),
+    FILEBROWSER_RENAME_FILE => array(
+      'title' => t('Rename file')),
     FILEBROWSER_DOWNLOAD => array(
       'title' => t('Download files')),
     FILEBROWSER_CREATE_FOLDER => array(
@@ -411,6 +413,14 @@ function filebrowser_menu() {
     'page arguments' => array(2),
     'type' => MENU_CALLBACK,
     'access arguments' => array(FILEBROWSER_DELETE_FILE)
+  );
+
+  $items['filebrowser/rename/%'] = array(
+    'page callback' => 'filebrowser_page_rename',
+    'file' => 'filebrowser.pages.inc',
+    'page arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'access arguments' => array(FILEBROWSER_RENAME_FILE)
   );
 
   $items['filebrowser/metadata/%'] = array(
@@ -842,6 +852,84 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
 }
 
 /**
+ * File rename form.
+ * CHECK: $node is used but not defined in this function
+ */
+function filebrowser_form_rename($form, &$form_state, $fids) {
+
+  // Store original names.
+  $original_names = array();
+
+  // Array of textboxes with new names.
+  $form['new_names'] = array(
+    '#tree' => TRUE,
+  );
+  foreach ($fids as $fid) {
+    $content = _filebrowser_node_content_load($fid);
+    $node = node_load($content['nid']);
+    $name = _filebrowser_safe_basename($content['path']);
+    $original_names[$fid] = array(
+      'root' => _filebrowser_get_node_root($node),
+      'name' => $name,
+    );
+    $form['new_names'][$fid] = array(
+      '#type' => 'textfield',
+      '#default_value' => $name,
+    );
+  }
+
+  // Store original names into form values.
+  $form['original_names'] = array('#type' => 'value', '#value' => $original_names);
+
+  return confirm_form(
+    $form,
+    t('Rename selected items...'),
+    isset($_GET['destination']) ? $_GET['destination'] : 'node/' . $node->nid,
+    t('This action cannot be undone.'),
+    t('Rename'),
+    t('Cancel')
+  );
+
+}
+
+/**
+ * Validate rename form values.
+ */
+function filebrowser_form_rename_validate($form, &$form_state) {
+
+  // Do not accept path separators into new filenames.
+  foreach ($form_state['values']['new_names'] as $fid => $new_name) {
+    if (strpos($new_name, '/') !== FALSE || strpos($new_name, "\\") !== FALSE) {
+      form_set_error('new_names[' . $fid . ']', t('Invalid filename: :filename', array(':filename' => $new_name)));
+    }
+  }
+
+}
+
+/**
+ * Rename files.
+ */
+function filebrowser_form_rename_submit($form, &$form_state) {
+
+  // Original and new names.
+  $original_names = $form_state['values']['original_names'];
+  $new_names = $form_state['values']['new_names'];
+
+  // Scan each original file to see if it has been changed
+  foreach ($original_names as $fid => $original_name) {
+    // Test if filename was changed.
+    if (!empty($new_names[$fid]) && $original_name['name'] != $new_names[$fid]) {
+      // Test if original file still exists.
+      $original_fullname = $original_name['root'] . '/' . $original_name['name'];
+      if (file_exists($original_fullname)) {
+        rename($original_fullname, $original_name['root'] . '/' . $new_names[$fid]);
+      }
+    }
+  }
+
+}
+
+/**
  * hook_node_access implementation.
  */
 function filebrowser_node_access($node, $op, $account) {
@@ -889,6 +977,12 @@ function filebrowser_filebrowser_actions_info($node) {
           'title' => t("Delete selected items")
       );
     }
+    if (user_access(FILEBROWSER_RENAME_FILE)) {
+      $actions[] = array(
+          'operation' => 'rename',
+          'title' => t("Rename selected items")
+      );
+    }
   }
   return $actions;
 }
@@ -915,6 +1009,9 @@ function filebrowser_filebrowser_action_process($node, $action, $fids) {
 
     case 'delete' :
       drupal_goto("filebrowser/delete/" . implode(',', $fids), array('query' => drupal_get_destination()) );
+
+    case 'rename' :
+      drupal_goto("filebrowser/rename/" . implode(',', $fids), array('query' => drupal_get_destination()) );
   }
 }
 

@@ -38,6 +38,7 @@ define('FILEBROWSER_CREATE_FOLDER', 'create folders');
 define('FILEBROWSER_DOWNLOAD_ARCHIVE', 'download archive files');
 define('FILEBROWSER_DOWNLOAD', 'download files');
 define('FILEBROWSER_DELETE_FILE', 'delete files');
+define('FILEBROWSER_RENAME_FILE', 'rename files');
 
 /**
  * Column identifiers definition.
