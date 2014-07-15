@@ -822,7 +822,6 @@ function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
     // Additional data.
     $file['full-path'] = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file['path']);
     $file['name'] = _filebrowser_safe_basename($file['full-path']);
-    $file['target'] = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file['path']);
 
     // Retrieve item metadata (needed to retrieve item icon).
     $result = module_invoke_all('filebrowser_metadata_get', $file);
@@ -903,24 +902,24 @@ function filebrowser_form_delete_confirm_validate($form, &$form_state) {
 function filebrowser_form_delete_confirm_submit($form, &$form_state) {
 
   foreach ($form_state['values']['items_to_delete'] as $file) {
-    $target = $file['target'];
-    if (is_s3_filesystem($target)) {
-      s3_delete($target);
+    $fullpath = $file['full-path'];
+    if (is_s3_filesystem($fullpath)) {
+      s3_delete($fullpath);
     }
     else {
-      if (is_file($target)) {
-        $result = unlink($target);
+      if (is_file($fullpath)) {
+        $result = unlink($fullpath);
         if (!$result) {
           drupal_set_message(t('Unable to delete @file', array(
-            '@file' => $target
+            '@file' => $fullpath
           )), 'warning');
         }
       }
       else {
-        $result = _filebrowser_rmdir($target);
+        $result = _filebrowser_rmdir($fullpath);
         if (!$result) {
           drupal_set_message(t('Unable to prune @file (not empty ?)', array(
-            '@file' => $target
+            '@file' => $fullpath
           )), 'warning');
         }
       }
