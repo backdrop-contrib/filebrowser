@@ -807,20 +807,81 @@ function filebrowser_form_actions_submit($form, $form_state) {
  * CHECK: $node is used but not defined in this function
  */
 function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
-  $form['fids'] = array(
-      '#type' => 'value',
-      '#value' => $fids
-  );
-  foreach ($fids as &$fid) {
+
+  // Items to delete.
+  $items = array();
+
+  // This flag indicates that a folder has been selected for deletion.
+  $folder_selected = FALSE;
+
+  // Scan passed fids and retrieve item fullnames.
+  foreach ($fids as $fid) {
     $file = _filebrowser_node_content_load($fid);
-    $fid = _filebrowser_safe_basename($file['path']);
+    $node = node_load($file['nid']);
+
+    // Additional data.
+    $file['full-path'] = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file['path']);
+    $file['name'] = _filebrowser_safe_basename($file['full-path']);
+    $file['target'] = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file['path']);
+
+    // Retrieve item metadata (needed to retrieve item icon).
+    $result = module_invoke_all('filebrowser_metadata_get', $file);
+    if ($result && is_array($result)) {
+      $file = array_merge($file, $result);
+    }
+
+    // Retrieve thumbnail.
+    $file['thumbnail'] = _filebrowser_thumbnails_generate($node, $file);
+
+    // Store item data.
+    $items[$fid] = $file;
   }
+
+  // Store items being deleted into a form value.
+  $form['items_to_delete'] = array('#type' => 'value', '#value' => $items);
+
+  // Compose the list of files being deleted.
+  $list = '<ul>';
+  foreach ($items as $item) {
+    $list .= '<li>' . $item['thumbnail'] . ' ';
+    if ($item['kind']) {
+      $folder_selected = TRUE;
+      $list .= '<b>' . $item['name'] . '</b>';
+    }
+    else {
+      $list .= $item['name'];
+    }
+    $list .= '</li>';
+  }
+  $list .= '</ul>';
+  $form['items'] = array(
+    '#type' => 'item',
+    '#title' => t('Items being deleted'),
+    '#markup' => $list
+  );
+
+  // If at least a folder has been selected, add a confirmation checkbox.
+  if ($folder_selected) {
+    $form['confirmation'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Confirm deletion of selected <b>subfolders</b> and all of their content.'),
+      '#default_value' => FALSE,
+    );
+  }
+  else {
+    // No confirmation needed, we'll add a "fake" field.
+    $form['confirmation'] = array(
+      '#type' => 'value',
+      '#value' => TRUE,
+    );
+  }
+
+  // show the form to the user
   return confirm_form(
     $form,
     t('Are you sure you want to delete the following items?'),
     isset($_GET['destination']) ? $_GET['destination'] : 'node/' . $node->nid,
-    '<ul><li>' . implode('</li><li>', $fids) . '</li></ul>'
-    . t('This action cannot be undone.') . '<br /><br />' . t('<b>WARNING</b>: if you selected subfolders, their content will be deleted too.'),
+    t('This action cannot be undone.'),
     t('Delete'),
     t('Cancel')
   );
@@ -829,12 +890,20 @@ function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
 /**
  * File delete confirmation form submit
  */
+function filebrowser_form_delete_confirm_validate($form, &$form_state) {
+  // Check if the confirmation checkbox has been checked.
+  if (empty($form_state['values']['confirmation'])) {
+    form_set_error('confirmation', t('You must confirm deletion of selected subfolders.'));
+  }
+}
+
+/**
+ * File delete confirmation form submit
+ */
 function filebrowser_form_delete_confirm_submit($form, &$form_state) {
 
-  foreach ($form_state['values']['fids'] as $fid) {
-    $content = _filebrowser_node_content_load($fid);
-    $node = node_load($content['nid']);
-    $target = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['path']);
+  foreach ($form_state['values']['items_to_delete'] as $file) {
+    $target = $file['target'];
     if (is_s3_filesystem($target)) {
       s3_delete($target);
     }
@@ -843,7 +912,7 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
         $result = unlink($target);
         if (!$result) {
           drupal_set_message(t('Unable to delete @file', array(
-              '@file' => $target
+            '@file' => $target
           )), 'warning');
         }
       }
@@ -851,13 +920,13 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
         $result = _filebrowser_rmdir($target);
         if (!$result) {
           drupal_set_message(t('Unable to prune @file (not empty ?)', array(
-              '@file' => $target
+            '@file' => $target
           )), 'warning');
         }
       }
     }
   }
- // $form_state['redirect'] = isset($_GET['destination']) ? $_GET['destination'] : '<front>';
+
 }
 
 /**
