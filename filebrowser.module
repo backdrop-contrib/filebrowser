@@ -821,7 +821,7 @@ function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
 
     // Additional data.
     $file['full-path'] = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $file['path']);
-    $file['name'] = _filebrowser_safe_basename($file['full-path']);
+    $file['display-name'] = _filebrowser_safe_basename($file['full-path']);
 
     // Retrieve item metadata (needed to retrieve item icon).
     $result = module_invoke_all('filebrowser_metadata_get', $file);
@@ -845,10 +845,10 @@ function filebrowser_form_delete_confirm($form, &$form_state, $fids) {
     $list .= '<li>' . $item['thumbnail'] . ' ';
     if ($item['kind']) {
       $folder_selected = TRUE;
-      $list .= '<b>' . $item['name'] . '</b>';
+      $list .= '<b>' . $item['display-name'] . '</b>';
     }
     else {
-      $list .= $item['name'];
+      $list .= $item['display-name'];
     }
     $list .= '</li>';
   }
@@ -909,7 +909,11 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
     else {
       if (is_file($fullpath)) {
         $result = unlink($fullpath);
-        if (!$result) {
+        if ($result) {
+          // Remove metadata of the deleted file.
+          module_invoke_all('filebrowser_metadata_set', $file, NULL);
+        }
+        else {
           drupal_set_message(t('Unable to delete @file', array(
             '@file' => $fullpath
           )), 'warning');
@@ -934,8 +938,8 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
  */
 function filebrowser_form_rename($form, &$form_state, $fids) {
 
-  // Store original names.
-  $original_names = array();
+  // Store original items.
+  $original_files = array();
 
   // Array of textboxes with new names.
   $form['new_names'] = array(
@@ -945,9 +949,11 @@ function filebrowser_form_rename($form, &$form_state, $fids) {
     $content = _filebrowser_node_content_load($fid);
     $node = node_load($content['nid']);
     $name = _filebrowser_safe_basename($content['path']);
-    $original_names[$fid] = array(
-      'path' => _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['root']),
-      'name' => $name,
+    $path = _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['root']);
+    $original_files[$fid] = array(
+      'path' => $path,
+      'display-name' => $name,
+      'full-path' => $path . '/' . $name,
     );
     $form['new_names'][$fid] = array(
       '#type' => 'textfield',
@@ -956,7 +962,7 @@ function filebrowser_form_rename($form, &$form_state, $fids) {
   }
 
   // Store original names into form values.
-  $form['original_names'] = array('#type' => 'value', '#value' => $original_names);
+  $form['original_files'] = array('#type' => 'value', '#value' => $original_files);
 
   return confirm_form(
     $form,
@@ -989,18 +995,27 @@ function filebrowser_form_rename_validate($form, &$form_state) {
 function filebrowser_form_rename_submit($form, &$form_state) {
 
   // Original and new names.
-  $original_names = $form_state['values']['original_names'];
+  $original_files = $form_state['values']['original_files'];
   $new_names = $form_state['values']['new_names'];
 
   // Scan each original file to see if it has been changed
-  foreach ($original_names as $fid => $original_name) {
+  foreach ($original_files as $fid => $original_file) {
     // Test if filename was changed.
-    if (!empty($new_names[$fid]) && $original_name['name'] != $new_names[$fid]) {
+    if (!empty($new_names[$fid]) && $original_file['display-name'] != $new_names[$fid]) {
+      $new_file = array(
+        'display-name' => $new_names[$fid],
+        'full-path' => $original_file['path'] . '/' . $new_names[$fid],
+      );
       // Test if original file still exists.
-      $original_fullname = $original_name['path'] . '/' . $original_name['name'];
-      if (file_exists($original_fullname)) {
-        rename($original_fullname, $original_name['path'] . '/' . $new_names[$fid]);
-        // TODO: rename the entry in descript.ion file.
+      if (file_exists($original_file['full-path'])) {
+        // Load original metadata.
+        $metadata = module_invoke_all('filebrowser_metadata_get', $original_file);
+        // Rename the file.
+        rename($original_file['full-path'], $new_file['full-path']);
+        // Save metadata to the new filename.
+        module_invoke_all('filebrowser_metadata_set', $new_file, $metadata);
+        // Clear the old one.
+        module_invoke_all('filebrowser_metadata_set', $original_file, NULL);
       }
     }
   }
@@ -1243,7 +1258,13 @@ function filebrowser_filebrowser_metadata_set($file, $metadata) {
   if (!isset($data['file'])) {
     $data['file'] = "$base_path/descript.ion";
   }
-  $data['data'][$file['display-name']] = $metadata['description'];
+  if ($metadata === NULL) {
+    // Clear metadata for the given file.
+    unset($data['data'][$file['display-name']]);
+  }
+  else {
+    $data['data'][$file['display-name']] = $metadata['description'];
+  }
   _filebrowser_save_description_file($data, $base_path);
   _filebrowser_load_description_file($base_path, $data);
 }
