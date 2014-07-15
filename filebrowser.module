@@ -878,7 +878,7 @@ function filebrowser_form_rename($form, &$form_state, $fids) {
     $node = node_load($content['nid']);
     $name = _filebrowser_safe_basename($content['path']);
     $original_names[$fid] = array(
-      'root' => _filebrowser_get_node_root($node),
+      'path' => _filebrowser_encoding_to_fs($node, _filebrowser_get_node_root($node) . $content['root']),
       'name' => $name,
     );
     $form['new_names'][$fid] = array(
@@ -929,9 +929,10 @@ function filebrowser_form_rename_submit($form, &$form_state) {
     // Test if filename was changed.
     if (!empty($new_names[$fid]) && $original_name['name'] != $new_names[$fid]) {
       // Test if original file still exists.
-      $original_fullname = $original_name['root'] . '/' . $original_name['name'];
+      $original_fullname = $original_name['path'] . '/' . $original_name['name'];
       if (file_exists($original_fullname)) {
-        rename($original_fullname, $original_name['root'] . '/' . $new_names[$fid]);
+        rename($original_fullname, $original_name['path'] . '/' . $new_names[$fid]);
+        // TODO: rename the entry in descript.ion file.
       }
     }
   }
