@@ -60,6 +60,9 @@ function filebrowser_page_download($fid) {
     $client = awssdk_get_client('s3');
     $client-> registerStreamWrapper();
   }
+  else {
+    $is_s3 = false;
+  }
 
   if (is_dir($target)) {
     if (!function_exists("zip_open")) {
