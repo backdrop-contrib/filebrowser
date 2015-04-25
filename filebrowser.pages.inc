@@ -191,7 +191,7 @@ function filebrowser_update_thumbnails($fids) {
     $content = _filebrowser_node_content_load($fid);
     $node = node_load($content['nid']);
     _filebrowser_load_files($node, $fid);
-
+    //todo: check $thumbnailer variable belows because it gives IDE
     foreach ($node->file_listing as $name => &$file) {
       module_invoke($thumbnailer, "filebrowser_thumbnailer_cleanup", $node);
       foreach ($thumbnailers as $thumbnailer) {
