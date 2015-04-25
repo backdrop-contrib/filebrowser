@@ -103,7 +103,7 @@ function filebrowser_page_download($fid) {
   $decoded_file = _filebrowser_encoding_from_fs($node, $target);
   //  debug($decoded_file, '$decoded_file line 94');
 
-  $result = module_invoke_all('filebrowser_download_manager_process', 'private', $target, $decoded_file, $node-> folder_rights-> force_download);
+  $result = module_invoke_all('filebrowser_download_manager_process', 'private', $target, $decoded_file, !empty($node-> folder_rights-> force_download));
   if ($result) {
     if ($cleanup && file_exists($cleanup)) {
       unlink($cleanup);
