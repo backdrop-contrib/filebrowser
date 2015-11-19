@@ -502,7 +502,7 @@ function filebrowser_view($node, $view_mode) {
         'empty' => t('This folder is empty')
       );
       if ($node->file_listing['.']['folders_count'] > 0) {
-        $statistics['folders'] = format_plural($node->file_listing['.']['folders_count'], '1 dossier', '@count dossiers');
+        $statistics['folders'] = format_plural($node->file_listing['.']['folders_count'], '1 folder', '@count folders');
         $statistics['empty'] = NULL;
       }
       if ($node->file_listing['.']['files_count'] > 0) {
