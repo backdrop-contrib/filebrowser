@@ -53,14 +53,26 @@ function theme_dir_listing_icon_view($node) {
  * @param $node the node to transform to icon  view.
  * @return A string containing icon view XHTML.
  */
-
 function theme_dir_listing_statistics($statistics) {
+
+  // $whitelist is used to restrict indexes to filebrowser indexes.
+  // Issue #2616738 indicates addition of 'index' to the array
+
   $output = "<div class='dir-listing-status'>";
   if ($statistics['empty']) {
     $output .= $statistics['empty'];
   }
   else {
-    $output .= implode(" - ", $statistics);
+    $white_list = array('files', 'size', 'empty', 'folders');
+    $white_listed_statistics = array();
+
+    foreach($statistics as $key => $statistic) {
+      if (in_array($key, $white_list) && !empty($statistic)) {
+        $white_listed_statistics[] = $statistic;
+      }
+    }
+
+    $output .= implode(" - ", $white_listed_statistics);
   }
   $output .= "</div>";
   return $output;
