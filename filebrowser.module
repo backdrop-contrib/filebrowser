@@ -1145,35 +1145,48 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       return TRUE;
 
     case 'private' :
-      header('Content-Description: File Transfer');
-      header("Cache-Control: public, must-revalidate, max-age=0"); // HTTP/1.1
-      header("Pragma: public");
-      header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
-      header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
-      header("Content-Type: " . file_get_mimetype($filename));
-      header("Content-Transfer-Encoding: binary");
-      header("Content-Length: " . filesize($file));
+      if(ini_get('zlib.output_compression')) {
+        ini_set('zlib.output_compression', 'Off');
+      }
+      $headers = array(
+        'Content-Description' => 'File Transfer',
+          'Cache-Control' => 'public, must-revalidate, max-age=0', // HTTP/1.1
+          'Pragma' => 'public',
+          'Expires' => 'Sat, 26 Jul 1997 05:00:00 GMT', // Date in the past
+          'Last-Modified' => gmdate('D, d M Y H:i:s') . ' GMT',
+          'Content-Type' => file_get_mimetype($filename),
+          'Content-Transfer-Encoding' => 'binary',
+          'Content-Length' => filesize($file),
+      );
+
       if (stristr("MSIE", getenv("HTTP_USER_AGENT")) || stristr("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
-        header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
+        $headers['Content-Disposition'] = 'inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";';
       }
       else {
-        header($content_disposition . _filebrowser_safe_basename($filename) . '";');
+        $content_disposition = ($force_download ? 'attachment;' : 'inline;');
+        $headers['Content-Disposition'] =  $content_disposition.' filename="'. _filebrowser_safe_basename($filename) . '";';
       }
-      $block_size = 4096;
-      $buffer = '';
+      if (ob_get_level()) {
+        ob_end_clean();
+      }
+      foreach ($headers as $name => $value) {
+        drupal_add_http_header($name, $value);
+      }
 
-      $handle = fopen($file, 'rb');
+      drupal_send_headers();
+
       drupal_set_time_limit(0);
-      if ($handle !== FALSE) {
-        while (!feof($handle)) {
-          $buffer = fgets($handle, $block_size);
-          echo $buffer;
-          ob_flush();
-          flush();
-        }
-        fclose($handle);
+      // Transfer file in 1024 byte chunks to save memory usage.
+      if  ($fd = fopen($file, 'rb')) {
+        while (!feof($fd)) {
+          print fread($fd, 1024);
+         }
+         fclose($fd);
       }
-      return TRUE;
+      else {
+        drupal_not_found();
+      }
+      drupal_exit();
   }
 }
 
