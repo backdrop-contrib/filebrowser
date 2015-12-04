@@ -452,7 +452,7 @@ function filebrowser_view($node, $view_mode) {
     // Full node content view
     // Keep track of the current location and update breadcrumbs to reflect that.
     $breadcrumbs = array(
-      l(t('Home'), NULL)
+        l(t('Home'), NULL)
     );
     $breadcrumb_path = "";
     //print_r($node);
@@ -466,14 +466,12 @@ function filebrowser_view($node, $view_mode) {
                      WHERE path = :path", array(':path' => $breadcrumb_path))->fetchField();
       if ($child_dir == '/') {
         $label = $node->title;
-      }
-      else {
+      } else {
         $label = $child_dir;
       }
       if ($i < (count($path_elements) - 1)) {
         $breadcrumbs[] = l($label, "node/{$node->nid}/$fid");
-      }
-      else {
+      } else {
         $breadcrumbs[] = $label;
       }
       drupal_set_breadcrumb($breadcrumbs);
@@ -481,25 +479,25 @@ function filebrowser_view($node, $view_mode) {
       // Insert file listing  content part
       $current_view = _filebrowser_externals('presentations', $node->folder_presentation->default_view);
       $node->content['filebrowser_content'] = array(
-        '#markup' => count($node->file_listing) == 0 ? '' : theme($current_view['theme'], array('node' => $node)),
-        '#weight' => 1
+          '#markup' => count($node->file_listing) == 0 ? '' : theme($current_view['theme'], array('node' => $node)),
+          '#weight' => 1
       );
       if ($node->folder_uploads->enabled && user_access(FILEBROWSER_UPLOAD)) {
         $form = drupal_get_form('filebrowser_form_upload', $node);
         $node->content['filebrowser_form_upload'] = array(
-          '#markup' => drupal_render($form),
-          '#weight' => 2
+            '#markup' => drupal_render($form),
+            '#weight' => 2
         );
       }
       if ($node->folder_uploads->enabled && user_access(FILEBROWSER_CREATE_FOLDER)) {
         $form = drupal_get_form('filebrowser_form_create_folder', $node);
         $node->content['filebrowser_form_create_folder'] = array(
-          '#markup' => drupal_render($form),
-          '#weight' => 3
+            '#markup' => drupal_render($form),
+            '#weight' => 3
         );
       }
       $statistics = array(
-        'empty' => t('This folder is empty')
+          'empty' => t('This folder is empty')
       );
       if ($node->file_listing['.']['folders_count'] > 0) {
         $statistics['folders'] = format_plural($node->file_listing['.']['folders_count'], '1 folder', '@count folders');
@@ -511,20 +509,20 @@ function filebrowser_view($node, $view_mode) {
         $statistics['empty'] = NULL;
       }
       $node->content['filebrowser_statistics'] = array(
-        '#markup' => theme('dir_listing_statistics', $statistics),
-        '#weight' => 3
+          '#markup' => theme('dir_listing_statistics', $statistics),
+          '#weight' => 3
       );
     }
-
-    // Insert filebrowser links
-    $node->content['links']['filebrowser'] = array(
-      '#theme' => 'links__node__blog',
-      '#links' => _filebrowser_links($node),
-      '#attributes' => array('class' => array('links', 'inline')),
-    );
-
-    return $node;
   }
+
+  // Insert filebrowser links
+  $node->content['links']['filebrowser'] = array(
+    '#theme' => 'links__node__blog',
+    '#links' => _filebrowser_links($node),
+    '#attributes' => array('class' => array('links', 'inline')),
+  );
+
+  return $node;
 }
 
 /**
