@@ -53,26 +53,15 @@ function theme_dir_listing_icon_view($node) {
  * @param $node the node to transform to icon  view.
  * @return A string containing icon view XHTML.
  */
+
 function theme_dir_listing_statistics($statistics) {
-
-  // $whitelist is used to restrict indexes to filebrowser indexes.
-  // Issue #2616738 indicates addition of 'index' to the array
-
   $output = "<div class='dir-listing-status'>";
-  if ($statistics['empty']) {
+  if ($statistics['empty'] || $statistics == NULL) {
     $output .= $statistics['empty'];
   }
   else {
-    $white_list = array('files', 'size', 'empty', 'folders');
-    $white_listed_statistics = array();
-
-    foreach($statistics as $key => $statistic) {
-      if (in_array($key, $white_list) && !empty($statistic)) {
-        $white_listed_statistics[] = $statistic;
-      }
-    }
-
-    $output .= implode(" - ", $white_listed_statistics);
+    unset($statistics["theme_hook_suggestions"]);
+    $output .= implode(" - ", $statistics);
   }
   $output .= "</div>";
   return $output;
@@ -287,8 +276,8 @@ function theme_dir_listing_list_view($node) {
     $output = theme('table', array('header' => $header, 'rows' => $rows));
     if ($has_actions) {
       // in D7 we don't send the table to the form builder. The table is build by theme_tableselect
-      $form = drupal_get_form('filebrowser_form_actions', $header, $rows, $actions, $node);
-		  $output = drupal_render($form);
+      $form = backdrop_get_form('filebrowser_form_actions', $header, $rows, $actions, $node);
+		  $output = backdrop_render($form);
     }
     return $output;
   } // Directory is not empty
@@ -298,12 +287,12 @@ function theme_dir_listing_list_view($node) {
 // Temp solution by using the already rendered img $form['thumbnail']['#value']
 function theme_dir_listing_metadata_group($array_form) {
   $form = $array_form[''];
-  //$thumbnail = drupal_render($form['thumbnail']);
+  //$thumbnail = backdrop_render($form['thumbnail']);
   $output = "<table>";
   foreach (element_children($form) as $key) {
     if ($key != 'thumbnail') {
       //$output .= "<tr><td>$thumbnail</td><td>"
-      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>" . drupal_render($form[$key]) . "</td></tr>";
+      $output .= "<tr><td>" . $form['thumbnail']['#value'] . "</td><td>" . backdrop_render($form[$key]) . "</td></tr>";
    //   $thumbnail = '';
     }
   }

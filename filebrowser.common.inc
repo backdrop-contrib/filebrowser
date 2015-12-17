@@ -276,7 +276,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   if ($fid) {
     $content = _filebrowser_node_content_load($fid);
     if (!$content) {
-      drupal_goto("node/{$node->nid}");
+      backdrop_goto("node/{$node->nid}");
     }
     $relative_path = $content['path'];
   }
@@ -289,7 +289,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
 
   // If we shouldn't be in a subdirectory, redirect to root_dir.
   if ($is_subdir && !_filebrowser_can_explore_subfolders($node)) {
-    drupal_set_message(t('You\'re not allowed to browse sub folders.'), 'error');
+    backdrop_set_message(t('You\'re not allowed to browse sub folders.'), 'error');
     return;
   }
 
@@ -300,7 +300,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     foreach ($dirs as $dir) {
       if (!empty($dir)) {
         if (_filebrowser_cant_view_file($node, $dir)) {
-          drupal_set_message(t("You're not allowed to view '%dir'.", array('%dir' => $dir)), 'error');
+          backdrop_set_message(t("You're not allowed to view '%dir'.", array('%dir' => $dir)), 'error');
           return;
         }
       }
@@ -336,7 +336,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
   }
 
   if ($fs_root === FALSE) {
-    drupal_set_message(t('Configured folder is not readable or is not a directory.'), 'error');
+    backdrop_set_message(t('Configured folder is not readable or is not a directory.'), 'error');
     return;
   }
   if ($is_s3) {
@@ -544,7 +544,7 @@ function _filebrowser_load_files(&$node, $fid = NULL, $rebuild = FALSE) {
     }
     else {
       if (!isset($record['fid'])) {
-        drupal_write_record('node_dir_listing_content', $record);
+        backdrop_write_record('node_dir_listing_content', $record);
       }
 
       $key = $record['display-name'];
@@ -700,8 +700,9 @@ function _filebrowser_thumbnails_generate(& $node, & $file) {
   }
   $main_type = dirname($file['mime-type']);
   $mime_type = str_replace("/", "-", $file['mime-type']);
-  $module_path = drupal_get_path("module", "filebrowser") . "/icons/";
-  $theme_path = drupal_get_path('theme', $GLOBALS['theme']) . "/filebrowser/";
+  $module_path = backdrop_get_path("module", "filebrowser") . "/icons/";
+  $theme_path = backdrop_get_path('theme', $GLOBALS['theme']) . "/filebrowser/";
+  
   $icons = array(
     $theme_path . $mime_type . ".png",
     $theme_path . $main_type . ".png",
@@ -715,7 +716,8 @@ function _filebrowser_thumbnails_generate(& $node, & $file) {
       break;
     }
   }
-  return theme('image', array('path' => $icon, 'alt' => 'alt text'));
+  $stuff = theme('image', array('uri' => $icon, 'alt' => 'alt text'));
+  return $stuff;
 }
 
 /**

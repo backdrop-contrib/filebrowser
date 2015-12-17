@@ -50,7 +50,7 @@ function filebrowser_page_download($fid) {
   }
   if (!$content || !$node || !_filebrowser_can_download_file($node) || !$target) {
     //debug($content); debug($node); //debug($target);
-    drupal_access_denied();
+    backdrop_access_denied();
     exit();
   }
 
@@ -66,7 +66,7 @@ function filebrowser_page_download($fid) {
 
   if (is_dir($target)) {
     if (!function_exists("zip_open")) {
-      drupal_set_message(t("No ZIP support found in PHP installation, please contact your administrator"));
+      backdrop_set_message(t("No ZIP support found in PHP installation, please contact your administrator"));
       return;
     }
 
@@ -113,7 +113,7 @@ function filebrowser_page_download($fid) {
     }
   }
   else {
-    drupal_access_denied();
+    backdrop_access_denied();
   }
   exit();
 }
@@ -162,17 +162,17 @@ function filebrowser_form_metadata_submit($form, $form_state) {
       module_invoke_all('filebrowser_metadata_set', $file, $form_state['values'][$file['fid']]);
     }
   }
-  drupal_goto("node/{$form['#node']->nid}/{$form['#node']->file_listing['.']['fid']}");
+  backdrop_goto("node/{$form['#node']->nid}/{$form['#node']->file_listing['.']['fid']}");
 }
 
 function filebrowser_page_delete($fids) {
   $files_fid = explode(',', $fids);
-  return drupal_get_form('filebrowser_form_delete_confirm', $files_fid);
+  return backdrop_get_form('filebrowser_form_delete_confirm', $files_fid);
 }
 
 function filebrowser_page_rename($fids) {
   $files_fid = explode(',', $fids);
-  return drupal_get_form('filebrowser_form_rename', $files_fid);
+  return backdrop_get_form('filebrowser_form_rename', $files_fid);
 }
 
 function filebrowser_update_thumbnails($fids) {
@@ -210,6 +210,6 @@ function filebrowser_update_thumbnails($fids) {
     batch_process($_GET['destination']);
   }
   else {
-    drupal_set_message(t("No operation needed for thumbnail updating"));
+    backdrop_set_message(t("No operation needed for thumbnail updating"));
   }
 }

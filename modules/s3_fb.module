@@ -13,7 +13,7 @@ function validate_s3($path) {
       )));
     }
     else {
-      drupal_set_message(t('The directory %dir has been created on S3.', array(
+      backdrop_set_message(t('The directory %dir has been created on S3.', array(
         '%dir' => $path
       )));
     }
@@ -38,7 +38,7 @@ function validate_s3($path) {
  * @param $form_id
  */
 function s3_fb_form_dir_listing_node_form_alter(&$form, &$form_state, $form_id) {
-  $form['folder_path']['#description'] .= '<br>' . t('S3 Filebrowser module installed. To use Amazon S3 storage enter the full path to your storage location. Use lowercase s. (s3://your_bucket/directory)');
+  $form['folder_path']['#description'] .= '<br>' . t('S3 Filebrowser module installed. To use Amazon S3 storage enter the full path to your storage location (S3://your_bucket/directory)');
   $form['folder_rights']['download_archive']['#description'] .= '<br>' . t('S3 Filebrowser module installed.') . '<br><strong>' . t('Folder download is not supported yet by S3 Filebrowser. Please deselect this option.');
 }
 
@@ -83,7 +83,7 @@ function s3_set_db_content_updir($nid){
   }
   else {
     // set an error. This is an sub directory, so the 'up directory' should already exist in the DB
-    drupal_set_message(t('Parent directory reference error.'), 'error');
+    backdrop_set_message(t('Parent directory reference error.'), 'error');
   }
   $content_arr['exists'] = true;
   $content_arr['display-name'] = '..';
@@ -99,7 +99,7 @@ function s3_delete($target) {
     case "file":
       $result = unlink($target);
       if (!$result) {
-        drupal_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
+        backdrop_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
       }
       break;
     case "dir":
@@ -107,11 +107,11 @@ function s3_delete($target) {
       // todo: check why we need an end slash
       $result = $client-> deleteObject(s3_object_info($target . '/'));
       if (!$result) {
-        drupal_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
+        backdrop_set_message(t('Unable to delete @file', array('@file' => $target)), 'warning');
       }
       break;
     default:
-        drupal_set_message(t('Switch case default error in function s3_delete().'), 'error');
+        backdrop_set_message(t('Switch case default error in function s3_delete().'), 'error');
   }
 }
 
@@ -169,7 +169,7 @@ function s3_create_archive($target, $node, $fid, $files_fid) {
           $content = $body-> read($result['ContentLength']);
         }
         catch(Aws\S3\Exception\S3Exception $e) {
-          // todo: wrap in drupal message
+          // todo: wrap in backdrop message
           echo "Request failed.<br />";
         }
         $zip-> addFromString($file_name, $content);

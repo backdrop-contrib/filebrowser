@@ -1,6 +1,6 @@
 # $Id$
 #
-# French translation of Drupal (general)
+# French translation of Backdrop (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
 # Generated from files:
 #  filebrowser.admin.inc: n/a
@@ -54,8 +54,8 @@ msgid "The system file path to the directory"
 msgstr "Chemin vers le répertoire"
 
 #: filebrowser.module:393
-msgid "This can be an absolute path or should be relative to the Drupal root directory."
-msgstr "Peut être un chemin absolu ou relatif au répertoire racine de Drupal"
+msgid "This can be an absolute path or should be relative to the Backdrop root directory."
+msgstr "Peut être un chemin absolu ou relatif au répertoire racine de Backdrop"
 
 #: filebrowser.module:400
 msgid "Replacement patterns"
@@ -82,8 +82,8 @@ msgid "Use private downloads"
 msgstr "Utiliser les téléchargements privés"
 
 #: filebrowser.module:438
-msgid "Use private downloads if your files are outside Drupal root or if you want Drupal to check permissions."
-msgstr "Utiliser les téléchargements privés si vos fichiers sont situés en dehors de la racine Drupal (root) ou bien si vous souhaitez que Drupal contrôle les permissions."
+msgid "Use private downloads if your files are outside Backdrop root or if you want Backdrop to check permissions."
+msgstr "Utiliser les téléchargements privés si vos fichiers sont situés en dehors de la racine Backdrop (root) ou bien si vous souhaitez que Backdrop contrôle les permissions."
 
 #: filebrowser.module:444
 msgid "Download all files as an archive"

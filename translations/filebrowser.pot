@@ -24,7 +24,7 @@ msgid "The system file path to the directory"
 msgstr ""
 
 #: filebrowser.module:8
-msgid "This can be an absolute path or should be relative to the Drupal root directory."
+msgid "This can be an absolute path or should be relative to the Backdrop root directory."
 msgstr ""
 
 #: filebrowser.module:15

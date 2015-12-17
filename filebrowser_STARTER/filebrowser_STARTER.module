@@ -57,7 +57,7 @@ function filebrowser_STARTER_filebrowser_thumbnailer($file, $settings) {
 /**
  * hook_filebrowser_handler_settings implementation
  * @param $settings previously stored settings (see this as a kind of $form_data)
- * @return a Drupal form element
+ * @return a Backdrop form element
  */
 function filebrowser_STARTER_filebrowser_handler_settings($settings) {
   $form['size'] = array(
@@ -112,7 +112,7 @@ function filebrowser_STARTER_filebrowser_metadata_get($file) {
  */
 function filebrowser_STARTER_filebrowser_metadata_set($file, $metadata) {
   if (isset($metadata['STARTER_foo'])) {
-    drupal_set_message('It seems that you want to change "foo" to ' . $metadata['STARTER_foo'] . ' for ' . $file['display-name']);
+    backdrop_set_message('It seems that you want to change "foo" to ' . $metadata['STARTER_foo'] . ' for ' . $file['display-name']);
   }
 }
 

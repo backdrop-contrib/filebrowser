@@ -39,6 +39,18 @@ function filebrowser_node_info() {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function filebrowser_info()
+{
+    $prefixes['filebrowser.settings'] = array(
+        'label' => t('FileBrowser settings'),
+        'group' => t('Configuration')
+    );
+    return $prefixes;
+}
+
+/**
  * Implements hook_permission().
  */
 function filebrowser_permission() {
@@ -86,7 +98,7 @@ function filebrowser_form(&$node, &$form_state) {
   $form['folder_path'] = array(
     '#type' => 'textfield',
     '#title' => t('The system file path to the directory'),
-    '#description' => t('This can be an absolute path or should be relative to the Drupal root directory.'),
+    '#description' => t('This can be an absolute path or should be relative to the Backdrop root directory.'),
     '#default_value' => isset($node->folder_path) ? $node->folder_path : '',
     '#required' => TRUE
   );
@@ -321,7 +333,7 @@ function filebrowser_validate(& $node) {
          )));
     }
     else {
-      drupal_set_message(t('The directory %dir has been created.', array(
+      backdrop_set_message(t('The directory %dir has been created.', array(
         '%dir' => $path
         )));
     }
@@ -372,7 +384,7 @@ function filebrowser_load($nodes) {
  */
 function filebrowser_insert($node) {
   _filebrowser_prepare_record($node, FALSE);
-  drupal_write_record("node_dir_listing", $node);
+  backdrop_write_record("node_dir_listing", $node);
 }
 
 /**
@@ -380,7 +392,7 @@ function filebrowser_insert($node) {
  */
 function filebrowser_update($node) {
   _filebrowser_prepare_record($node, FALSE);
-  drupal_write_record("node_dir_listing", $node, 'nid');
+  backdrop_write_record("node_dir_listing", $node, 'nid');
   _filebrowser_node_content_delete($node);
 }
 
@@ -424,7 +436,7 @@ function filebrowser_menu() {
   );
 
   $items['filebrowser/metadata/%'] = array(
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('filebrowser_form_metadata', 2),
     'access callback' => '_filebrowser_metadata_access',
     'access arguments' => array(2),
@@ -447,12 +459,12 @@ function filebrowser_menu() {
  * Implements hook_init().
  */
 function filebrowser_view($node, $view_mode) {
-  if ($view_mode == "full") {
+  if ($view_mode=="full") {
     _filebrowser_load_files($node);
     // Full node content view
     // Keep track of the current location and update breadcrumbs to reflect that.
     $breadcrumbs = array(
-        l(t('Home'), NULL)
+      l(t('Home'), NULL)
     );
     $breadcrumb_path = "";
     //print_r($node);
@@ -460,68 +472,65 @@ function filebrowser_view($node, $view_mode) {
     $path_elements = explode('/', rtrim($node->file_listing['.']['relative-path'], "/"));
     for ($i = 0; $i < count($path_elements); $i++) {
       $child_dir = $path_elements[$i] == '' ? '/' : $path_elements[$i];
-      // Issue #2511546. Add a slash from the third breadcrumb
-      $breadcrumb_path = ($i < 2) ? $breadcrumb_path . $child_dir : $breadcrumb_path . '/' . $child_dir;
+      $breadcrumb_path .= $child_dir;
       $fid = db_query("SELECT fid FROM {node_dir_listing_content}
-                     WHERE path = :path", array(':path' => $breadcrumb_path))->fetchField();
-      if ($child_dir == '/') {
-        $label = $node->title;
-      } else {
-        $label = $child_dir;
-      }
-      if ($i < (count($path_elements) - 1)) {
-        $breadcrumbs[] = l($label, "node/{$node->nid}/$fid");
-      } else {
-        $breadcrumbs[] = $label;
-      }
-      drupal_set_breadcrumb($breadcrumbs);
-
-      // Insert file listing  content part
-      $current_view = _filebrowser_externals('presentations', $node->folder_presentation->default_view);
-      $node->content['filebrowser_content'] = array(
-          '#markup' => count($node->file_listing) == 0 ? '' : theme($current_view['theme'], array('node' => $node)),
-          '#weight' => 1
-      );
-      if ($node->folder_uploads->enabled && user_access(FILEBROWSER_UPLOAD)) {
-        $form = drupal_get_form('filebrowser_form_upload', $node);
-        $node->content['filebrowser_form_upload'] = array(
-            '#markup' => drupal_render($form),
-            '#weight' => 2
-        );
-      }
-      if ($node->folder_uploads->enabled && user_access(FILEBROWSER_CREATE_FOLDER)) {
-        $form = drupal_get_form('filebrowser_form_create_folder', $node);
-        $node->content['filebrowser_form_create_folder'] = array(
-            '#markup' => drupal_render($form),
-            '#weight' => 3
-        );
-      }
-      $statistics = array(
-          'empty' => t('This folder is empty')
-      );
-      if ($node->file_listing['.']['folders_count'] > 0) {
-        $statistics['folders'] = format_plural($node->file_listing['.']['folders_count'], '1 folder', '@count folders');
-        $statistics['empty'] = NULL;
-      }
-      if ($node->file_listing['.']['files_count'] > 0) {
-        $statistics['files'] = format_plural($node->file_listing['.']['files_count'], '1 file', '@count files');
-        $statistics['size'] = format_size($node->file_listing['.']['size']);
-        $statistics['empty'] = NULL;
-      }
-      $node->content['filebrowser_statistics'] = array(
-          '#markup' => theme('dir_listing_statistics', $statistics),
-          '#weight' => 3
-      );
+                     WHERE path = :path", array(':path' => $breadcrumb_path)) ->fetchField();
+    if ($child_dir == '/') {
+      $label = $node->title;
+    }
+    else {
+      $label = $child_dir;
+    }
+    if ($i < (count($path_elements) - 1)) {
+      $breadcrumbs[] = l($label, "node/{$node->nid}/$fid");
+    }
+    else {
+      $breadcrumbs[] = $label;
     }
   }
+  backdrop_set_breadcrumb($breadcrumbs);
 
-  // Insert filebrowser links
-  $node->content['links']['filebrowser'] = array(
-    '#theme' => 'links__node__blog',
-    '#links' => _filebrowser_links($node),
-    '#attributes' => array('class' => array('links', 'inline')),
+  // Insert file listing  content part
+  $current_view = _filebrowser_externals('presentations', $node->folder_presentation->default_view);
+  $node->content['filebrowser_content'] = array(
+     '#markup' => count($node->file_listing) == 0 ? '' : theme($current_view['theme'], array('node' => $node)),
+     '#weight' => 1
   );
-
+  if ($node->folder_uploads->enabled && user_access(FILEBROWSER_UPLOAD)) {
+    $form = backdrop_get_form('filebrowser_form_upload', $node);
+    $node->content['filebrowser_form_upload'] = array(
+      '#markup' => backdrop_render($form),
+      '#weight' => 2
+    );
+  }
+  if ($node->folder_uploads->enabled && user_access(FILEBROWSER_CREATE_FOLDER)) {
+    $form = backdrop_get_form('filebrowser_form_create_folder', $node);
+    $node->content['filebrowser_form_create_folder'] = array(
+      '#markup' => backdrop_render($form),
+      '#weight' => 3
+    );
+  }
+  $statistics = array(
+      'empty' => t('This folder is empty')
+  );
+  if ($node->file_listing['.']['folders_count'] > 0) {
+    $statistics['folders'] = format_plural($node->file_listing['.']['folders_count'], '1 folders', '@count folders');
+    $statistics['empty'] = NULL;
+  }
+  if ($node->file_listing['.']['files_count'] > 0) {
+    $statistics['files'] = format_plural($node->file_listing['.']['files_count'], '1 file', '@count files');
+    $statistics['size'] = format_size($node->file_listing['.']['size']);
+    $statistics['empty'] = NULL;
+  }
+  $node->content['filebrowser_statistics'] = array(
+    '#markup' => theme('dir_listing_statistics', $statistics),
+    '#weight' => 3
+    );
+  }
+  // Insert filebrowser links
+  $node-> content['links']['filebrowser'] = array('#theme' => 'links__node__blog',
+        '#links' => _filebrowser_links($node),
+        '#attributes' => array('class' => array('links', 'inline')),);
   return $node;
 }
 
@@ -537,7 +546,7 @@ function filebrowser_node_view($node, $view_mode) {
       $links['file_browser_metadata'] = array(
         'href' => "filebrowser/metadata/{$node->file_listing['.']['fid']}",
         'title' => t("Edit Metadatas"),
-        'query' => drupal_get_destination(),
+        'query' => backdrop_get_destination(),
       );
     }
     $thumbnailers = module_implements("filebrowser_thumbnailer_prepare");
@@ -545,7 +554,7 @@ function filebrowser_node_view($node, $view_mode) {
       $links['file_browser_update_thumbnails'] = array(
         'href' => "filebrowser/thumbnails/{$node->file_listing['.']['fid']}",
         'title' => t("Update thumbnails"),
-        'query' => drupal_get_destination()
+        'query' => backdrop_get_destination()
       );
     }
 
@@ -651,7 +660,7 @@ function filebrowser_form_upload_submit($form, &$form_state) {
   //debug ($target, 'just prior to copy()');
   $success = copy($_FILES['files']['tmp_name']["file_$i"], $target);
   if (!$success) {
-    drupal_set_message(t("Unable to upload this file, do you have filesystem right to do that ?"), 'error');
+    backdrop_set_message(t("Unable to upload this file, do you have filesystem right to do that ?"), 'error');
   }
   else {
     _filebrowser_load_files($node, NULL, TRUE); // force listing rebuild
@@ -662,7 +671,7 @@ function filebrowser_form_upload_submit($form, &$form_state) {
       ));
     }
   }
-  drupal_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
+  backdrop_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
 }
 
 function filebrowser_form_create_folder($form, $form_state, $node) {
@@ -721,7 +730,7 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
   $target = _filebrowser_encoding_to_fs($node, "{$node->file_listing['.']['full-path']}/{$form_state['values']['folder_name']}");
   $success = mkdir($target, 0777);
   if (!$success) {
-    drupal_set_message(t("Unable to create this folder, do you have filesystem right to do that ?"), 'error');
+    backdrop_set_message(t("Unable to create this folder, do you have filesystem right to do that ?"), 'error');
   }
   else {
     _filebrowser_load_files($node, NULL, TRUE); // force listing rebuild
@@ -732,7 +741,7 @@ function filebrowser_form_create_folder_submit($form, & $form_state) {
       ));
     }
   }
-  drupal_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
+  backdrop_goto("node/{$node->nid}/{$node->file_listing['.']['fid']}", _filebrowser_url_query());
 }
 
 function filebrowser_form_actions($form, &$form_state, $header, $options, $actions, $node) {
@@ -917,7 +926,7 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
           module_invoke_all('filebrowser_metadata_set', $file, NULL);
         }
         else {
-          drupal_set_message(t('Unable to delete @file', array(
+          backdrop_set_message(t('Unable to delete @file', array(
             '@file' => $fullpath
           )), 'warning');
         }
@@ -925,7 +934,7 @@ function filebrowser_form_delete_confirm_submit($form, &$form_state) {
       else {
         $result = _filebrowser_rmdir($fullpath);
         if (!$result) {
-          drupal_set_message(t('Unable to prune @file (not empty ?)', array(
+          backdrop_set_message(t('Unable to prune @file (not empty ?)', array(
             '@file' => $fullpath
           )), 'warning');
         }
@@ -1104,10 +1113,10 @@ function filebrowser_filebrowser_action_process($node, $action, $fids) {
       break;
 
     case 'delete' :
-      drupal_goto("filebrowser/delete/" . implode(',', $fids), array('query' => drupal_get_destination()) );
+      backdrop_goto("filebrowser/delete/" . implode(',', $fids), array('query' => backdrop_get_destination()) );
 
     case 'rename' :
-      drupal_goto("filebrowser/rename/" . implode(',', $fids), array('query' => drupal_get_destination()) );
+      backdrop_goto("filebrowser/rename/" . implode(',', $fids), array('query' => backdrop_get_destination()) );
   }
 }
 
@@ -1120,7 +1129,7 @@ function filebrowser_filebrowser_download_manager_info() {
           'title' => t('Direct download (files are served by the web server and should be accessible by it)')
       ),
       'private' => array(
-          'title' => t('Private download (files are served by PHP/Drupal an could be everywhere)')
+          'title' => t('Private download (files are served by PHP/Backdrop an could be everywhere)')
       )
   );
 }
@@ -1143,48 +1152,35 @@ function filebrowser_filebrowser_download_manager_process($delta = NULL, $file =
       return TRUE;
 
     case 'private' :
-      if(ini_get('zlib.output_compression')) {
-        ini_set('zlib.output_compression', 'Off');
-      }
-      $headers = array(
-        'Content-Description' => 'File Transfer',
-          'Cache-Control' => 'public, must-revalidate, max-age=0', // HTTP/1.1
-          'Pragma' => 'public',
-          'Expires' => 'Sat, 26 Jul 1997 05:00:00 GMT', // Date in the past
-          'Last-Modified' => gmdate('D, d M Y H:i:s') . ' GMT',
-          'Content-Type' => file_get_mimetype($filename),
-          'Content-Transfer-Encoding' => 'binary',
-          'Content-Length' => filesize($file),
-      );
-
+      header('Content-Description: File Transfer');
+      header("Cache-Control: public, must-revalidate, max-age=0"); // HTTP/1.1
+      header("Pragma: public");
+      header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+      header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+      header("Content-Type: " . file_get_mimetype($filename));
+      header("Content-Transfer-Encoding: binary");
+      header("Content-Length: " . filesize($file));
       if (stristr("MSIE", getenv("HTTP_USER_AGENT")) || stristr("Internet Explorer", getenv("HTTP_USER_AGENT"))) {
-        $headers['Content-Disposition'] = 'inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";';
+        header('Content-Disposition: inline; filename="' . mb_convert_encoding(_filebrowser_safe_basename($filename), "ISO-8859-2", "UTF-8") . '";');
       }
       else {
-        $content_disposition = ($force_download ? 'attachment;' : 'inline;');
-        $headers['Content-Disposition'] =  $content_disposition.' filename="'. _filebrowser_safe_basename($filename) . '";';
+        header($content_disposition . _filebrowser_safe_basename($filename) . '";');
       }
-      if (ob_get_level()) {
-        ob_end_clean();
-      }
-      foreach ($headers as $name => $value) {
-        drupal_add_http_header($name, $value);
-      }
+      $block_size = 4096;
+      $buffer = '';
 
-      drupal_send_headers();
-
-      drupal_set_time_limit(0);
-      // Transfer file in 1024 byte chunks to save memory usage.
-      if  ($fd = fopen($file, 'rb')) {
-        while (!feof($fd)) {
-          print fread($fd, 1024);
-         }
-         fclose($fd);
+      $handle = fopen($file, 'rb');
+      backdrop_set_time_limit(0);
+      if ($handle !== FALSE) {
+        while (!feof($handle)) {
+          $buffer = fgets($handle, $block_size);
+          echo $buffer;
+          ob_flush();
+          flush();
+        }
+        fclose($handle);
       }
-      else {
-        drupal_not_found();
-      }
-      drupal_exit();
+      return TRUE;
   }
 }
 
