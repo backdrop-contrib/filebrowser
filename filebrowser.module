@@ -393,7 +393,9 @@ function filebrowser_insert($node) {
 function filebrowser_update($node) {
   _filebrowser_prepare_record($node, FALSE);
   backdrop_write_record("node_dir_listing", $node, 'nid');
-  _filebrowser_node_content_delete($node);
+  // From Drupal Filebrowser Issue #2760957: listing edit resets fids
+  // No need to reset the fids on node edit.
+  // _filebrowser_node_content_delete($node);
 }
 
 /**
