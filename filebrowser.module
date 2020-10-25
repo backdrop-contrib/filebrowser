@@ -474,7 +474,8 @@ function filebrowser_view($node, $view_mode) {
     $path_elements = explode('/', rtrim($node->file_listing['.']['relative-path'], "/"));
     for ($i = 0; $i < count($path_elements); $i++) {
       $child_dir = $path_elements[$i] == '' ? '/' : $path_elements[$i];
-      $breadcrumb_path .= $child_dir;
+      // From Drupal Filebrowser Issue #2511546: Add a slash from the third breadcrumb.
+      $breadcrumb_path = ($i < 2) ? $breadcrumb_path . $child_dir : $breadcrumb_path . '/' . $child_dir;
       $fid = db_query("SELECT fid FROM {node_dir_listing_content}
                      WHERE path = :path", array(':path' => $breadcrumb_path)) ->fetchField();
     if ($child_dir == '/') {
