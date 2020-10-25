@@ -533,7 +533,9 @@ function filebrowser_view($node, $view_mode) {
   // Insert filebrowser links
   $node-> content['links']['filebrowser'] = array('#theme' => 'links__node__blog',
         '#links' => _filebrowser_links($node),
-        '#attributes' => array('class' => array('links', 'inline')),);
+        '#attributes' => array('class' => array('links', 'inline')),
+	);
+	
   return $node;
 }
 
@@ -654,7 +656,7 @@ function filebrowser_form_upload_validate($form, &$form_state) {
 }
 
 /**
- * uploads submition.
+ * uploads submission.
  */
 function filebrowser_form_upload_submit($form, &$form_state) {
   $i = 1; // Later we can have multi-upload
@@ -807,7 +809,7 @@ function filebrowser_form_actions_submit($form, $form_state) {
     if ($value) {
       $fids[] = $form['table']['#options'][$key]['fid'];
     }
-	}
+  }
   $result = module_invoke_all('filebrowser_action_process', $form['#node'], $form_state['values']['action'], $fids);
     if ($result) {
       return $result;
