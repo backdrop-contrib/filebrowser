@@ -1,8 +1,6 @@
+type = module
 name = Filebrowser
 description = Provides FTP-like browsing capabilities.
 version = 1.x-3.5
 backdrop = 1.x
-type = module
 stylesheets[all][] = css/filebrowser_style.css
-package = FileBrowser
-project = "filebrowser"
