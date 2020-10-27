@@ -393,7 +393,9 @@ function filebrowser_insert($node) {
 function filebrowser_update($node) {
   _filebrowser_prepare_record($node, FALSE);
   backdrop_write_record("node_dir_listing", $node, 'nid');
-  _filebrowser_node_content_delete($node);
+  // From Drupal Filebrowser Issue #2760957: listing edit resets fids
+  // No need to reset the fids on node edit.
+  // _filebrowser_node_content_delete($node);
 }
 
 /**
@@ -472,7 +474,8 @@ function filebrowser_view($node, $view_mode) {
     $path_elements = explode('/', rtrim($node->file_listing['.']['relative-path'], "/"));
     for ($i = 0; $i < count($path_elements); $i++) {
       $child_dir = $path_elements[$i] == '' ? '/' : $path_elements[$i];
-      $breadcrumb_path .= $child_dir;
+      // From Drupal Filebrowser Issue #2511546: Add a slash from the third breadcrumb.
+      $breadcrumb_path = ($i < 2) ? $breadcrumb_path . $child_dir : $breadcrumb_path . '/' . $child_dir;
       $fid = db_query("SELECT fid FROM {node_dir_listing_content}
                      WHERE path = :path", array(':path' => $breadcrumb_path)) ->fetchField();
     if ($child_dir == '/') {
@@ -530,7 +533,9 @@ function filebrowser_view($node, $view_mode) {
   // Insert filebrowser links
   $node-> content['links']['filebrowser'] = array('#theme' => 'links__node__blog',
         '#links' => _filebrowser_links($node),
-        '#attributes' => array('class' => array('links', 'inline')),);
+        '#attributes' => array('class' => array('links', 'inline')),
+	);
+	
   return $node;
 }
 
@@ -651,7 +656,7 @@ function filebrowser_form_upload_validate($form, &$form_state) {
 }
 
 /**
- * uploads submition.
+ * uploads submission.
  */
 function filebrowser_form_upload_submit($form, &$form_state) {
   $i = 1; // Later we can have multi-upload
@@ -804,7 +809,7 @@ function filebrowser_form_actions_submit($form, $form_state) {
     if ($value) {
       $fids[] = $form['table']['#options'][$key]['fid'];
     }
-	}
+  }
   $result = module_invoke_all('filebrowser_action_process', $form['#node'], $form_state['values']['action'], $fids);
     if ($result) {
       return $result;
