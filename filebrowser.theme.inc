@@ -259,7 +259,7 @@ function theme_dir_listing_list_view($node) {
         if ($table_sort['sort'] == 'asc') {
           $just_folders = array_reverse($just_folders, TRUE);
         }
-        usort($just_folders, $sorter);
+        usort($just_files, $sorter);
         if ($table_sort['sort'] == 'asc') {
           $just_files = array_reverse($just_files, TRUE);
         }
