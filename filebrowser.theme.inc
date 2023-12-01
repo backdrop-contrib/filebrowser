@@ -249,7 +249,7 @@ function theme_dir_listing_list_view($node) {
           case 'string' :
             $sorter = function ($a, $b) use ($field) {
               $a = isset($a[$field]) ? $a[$field]  : '';
-              $b = isset($b[$field]) ? $b[$field]: '';
+              $b = isset($b[$field]) ? $b[$field] : '';
               return -strcmp(backdrop_strtolower($a), backdrop_strtolower($b));
             };
           break;
