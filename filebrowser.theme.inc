@@ -236,7 +236,7 @@ function theme_dir_listing_list_view($node) {
       $field = $table_sort['sql'];
       $columns = _filebrowser_externals('metadata_info');
       if (isset($columns[$table_sort['sql']]) && isset($columns[$table_sort['sql']]['sortable']) && $columns[$table_sort['sql']]['sortable']) {
-				$sorter = null;
+        $sorter = null;
         switch ($columns[$table_sort['sql']]['type']) {
           case 'integer' :
             $sorter = function ($a, $b) use ($field) {
