@@ -127,7 +127,7 @@ function theme_dir_listing_list_view($node) {
             $visible_columns[$column_name] = TRUE;
             $unsorted_rows[$file_name][FILEBROWSER_DATA_NAME_ICON] = array(
                 'data' => _filebrowser_thumbnails_generate($node, $data),
-                'class' => 'icon'
+              'class' => 'icon',
             );
             break;
 
