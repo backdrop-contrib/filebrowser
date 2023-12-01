@@ -126,8 +126,8 @@ function theme_dir_listing_list_view($node) {
           case FILEBROWSER_DATA_NAME_ICON :
             $visible_columns[$column_name] = TRUE;
             $unsorted_rows[$file_name][FILEBROWSER_DATA_NAME_ICON] = array(
-                'data' => _filebrowser_thumbnails_generate($node, $data),
-                'style' => 'width:1%;'
+              'data' => _filebrowser_thumbnails_generate($node, $data),
+              'class' => 'icon',
             );
             break;
 
@@ -236,26 +236,29 @@ function theme_dir_listing_list_view($node) {
       $field = $table_sort['sql'];
       $columns = _filebrowser_externals('metadata_info');
       if (isset($columns[$table_sort['sql']]) && isset($columns[$table_sort['sql']]['sortable']) && $columns[$table_sort['sql']]['sortable']) {
+        $sorter = null;
         switch ($columns[$table_sort['sql']]['type']) {
           case 'integer' :
-            $code = '$a=isset($a["' . $field . '"])?$a["' . $field . '"]:0;';
-            $code .= '$b=isset($b["' . $field . '"])?$b["' . $field . '"]:0;';
-            $code .= 'return $a-$b;';
-            break;
+            $sorter = function ($a, $b) use ($field) {
+              $a = isset($a[$field]) ? $a[$field] : 0;
+              $b = isset($b[$field]) ? $b[$field] : 0;
+              return $a-$b;
+            };
+          break;
 
           case 'string' :
-            $code = '$a=isset($a["' . $field . '"])?$a["' . $field . '"]:"";';
-            $code .= '$b=isset($b["' . $field . '"])?$b["' . $field . '"]:"";';
-            $code .= 'return -strcmp(strtolower($a),strtolower($b));';
-            break;
-
+            $sorter = function ($a, $b) use ($field) {
+              $a = isset($a[$field]) ? $a[$field] : '';
+              $b = isset($b[$field]) ? $b[$field] : '';
+              return -strcmp(backdrop_strtolower($a), backdrop_strtolower($b));
+            };
+          break;
         }
-        $sorter = create_function('$a,$b', $code);
         usort($just_folders, $sorter);
         if ($table_sort['sort'] == 'asc') {
           $just_folders = array_reverse($just_folders, TRUE);
         }
-        usort($just_files, create_function('$a,$b', $code));
+        usort($just_files, $sorter);
         if ($table_sort['sort'] == 'asc') {
           $just_files = array_reverse($just_files, TRUE);
         }
